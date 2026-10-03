@@ -17,11 +17,12 @@ import {
   PixelArtResult,
 } from "@/lib/types/activities";
 import {
-  Eye,
-  FileText,
+  Printer,
+  FileCheck2,
   AlertCircle,
   Loader2,
-  Printer,
+  CheckCircle2,
+  FileText,
 } from "lucide-react";
 
 interface Props {
@@ -196,7 +197,6 @@ export const ActivityPreview = ({
     }
   };
 
-  // Check if current activity has valid data
   const hasData = Boolean(
     (type === "wordsearch" && wordSearchResult && wordSearchResult.grid.length > 0) ||
     (type === "crossword" && crosswordResult && crosswordResult.words.length > 0) ||
@@ -213,657 +213,692 @@ export const ActivityPreview = ({
   );
 
   return (
-    <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-6 sm:p-7 flex flex-col gap-6">
-      {/* Encabezado del visor */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-stone-900 font-heading flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
-                <Eye size={18} />
-              </span>
-              Vista Previa Interactiva
-            </h2>
+    <div className="flex flex-col gap-4">
+      {/* Studio Canvas Toolbar */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+            <FileCheck2 size={16} className="stroke-[2.2]" />
           </div>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Verifica la distribución y alterna entre la ficha del alumno y el solucionario
-          </p>
+          <div>
+            <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              Pliego de Impresión A4
+              <span className="text-[10px] font-normal text-slate-500 font-mono">
+                210 × 297 mm
+              </span>
+            </h3>
+            <p className="text-[11px] text-slate-500">
+              Escalado óptico 1:1 para fotocopiado escolar
+            </p>
+          </div>
         </div>
 
-        {/* Selector de modo Alumno / Solución */}
-        <div className="flex items-center p-1 bg-stone-100 rounded-2xl border border-stone-200/80 self-start sm:self-auto">
+        {/* Tactile Mode Switcher */}
+        <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/70 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setShowSolution(false)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
               !showSolution
-                ? "bg-white text-stone-800 shadow-xs border border-stone-200/60"
-                : "text-stone-500 hover:text-stone-800"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            ✏️ Ficha Alumno
+            Ficha Alumno
           </button>
           <button
             type="button"
             onClick={() => setShowSolution(true)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] flex items-center gap-1.5 ${
               showSolution
-                ? "bg-amber-100 text-amber-900 shadow-xs border border-amber-300 font-bold"
-                : "text-stone-500 hover:text-stone-800"
+                ? "bg-slate-900 text-white shadow-xs font-bold"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            🎯 Solucionario
+            Solucionario
           </button>
         </div>
       </div>
 
       {errorMsg && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-          <AlertCircle size={16} className="shrink-0" />
+          <AlertCircle size={15} className="shrink-0 text-red-600" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Área interactiva */}
-      {!hasData ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-stone-200 rounded-2xl text-stone-400">
-          <FileText size={40} className="stroke-[1.5] mb-2 text-stone-300" />
-          <p className="text-sm font-semibold text-stone-600">Sin datos suficientes</p>
-          <p className="text-xs text-stone-400 mt-1 max-w-xs">
-            Ingresa palabras, pistas o texto en el panel izquierdo para previsualizar y descargar la ficha.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Header de la ficha simulada */}
-          <div className="text-center border-b border-stone-100 pb-3">
-            <h3 className="text-xl font-black text-stone-900 font-heading tracking-tight">{title}</h3>
-            <p className="text-xs text-stone-400 mt-1">Nombre: _________________________  Fecha: _________</p>
-            {showSolution && (
-              <span className="inline-block mt-2 px-2.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold uppercase rounded-md tracking-wider">
-                *** Modo Solución Activado ***
-              </span>
-            )}
+      {/* Workbench Paper Canvas */}
+      <div className="p-4 sm:p-7 rounded-2xl bg-slate-100/70 border border-slate-200/80 canvas-grid flex justify-center">
+        {!hasData ? (
+          <div className="paper-sheet rounded-xl p-12 w-full max-w-lg min-h-[460px] flex flex-col items-center justify-center text-center text-slate-400 border border-slate-200/60">
+            <FileText size={36} className="stroke-[1.3] text-slate-300 mb-3" />
+            <h4 className="text-sm font-semibold text-slate-700">Lienzo en espera de datos</h4>
+            <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
+              Configura las palabras o texto en el panel izquierdo para proyectar la hoja de actividades.
+            </p>
           </div>
+        ) : (
+          /* Simulated Physical A4 Sheet */
+          <div className="paper-sheet rounded-xl border border-slate-200/90 w-full max-w-xl p-7 sm:p-9 relative overflow-hidden transition-all duration-200">
+            {/* Corner registration marks */}
+            <div className="absolute top-2 left-2 w-3 h-3 border-t border-l border-slate-300 pointer-events-none" />
+            <div className="absolute top-2 right-2 w-3 h-3 border-t border-r border-slate-300 pointer-events-none" />
+            <div className="absolute bottom-2 left-2 w-3 h-2 border-b border-l border-slate-300 pointer-events-none" />
+            <div className="absolute bottom-2 right-2 w-3 h-2 border-b border-r border-slate-300 pointer-events-none" />
 
-          {/* Renderizado específico por tipo de actividad */}
+            {/* Simulated Paper Header */}
+            <div className="border-b border-slate-200 pb-4 mb-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-heading tracking-tight leading-tight">
+                    {title}
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-3 text-xs text-slate-500 font-medium">
+                    <span>Nombre: __________________________________</span>
+                    <span>Fecha: ____________</span>
+                  </div>
+                </div>
 
-          {/* 1. Sopa de Letras */}
-          {type === "wordsearch" && wordSearchResult && (
-            <div className="flex flex-col items-center">
-              <div
-                className="grid gap-1 p-3 bg-stone-50 rounded-2xl border border-stone-200"
-                style={{ gridTemplateColumns: `repeat(${wordSearchResult.size}, minmax(0, 1fr))` }}
-              >
-                {wordSearchResult.grid.map((row, r) =>
-                  row.map((char, c) => {
-                    const isSol =
-                      showSolution &&
-                      wordSearchResult.placedWords.some((w) =>
-                        Array.from({ length: w.word.length }).some((_, i) => {
-                          const py = w.y + w.direction[0] * i;
-                          const px = w.x + w.direction[1] * i;
-                          return py === r && px === c;
-                        })
-                      );
-
-                    return (
-                      <div
-                        key={`${r}-${c}`}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-mono text-xs sm:text-sm font-bold rounded-md transition-colors ${
-                          isSol
-                            ? "bg-red-500 text-white shadow-xs"
-                            : "bg-white text-stone-800 border border-stone-200/80"
-                        }`}
-                      >
-                        {char}
-                      </div>
-                    );
-                  })
+                {showSolution && (
+                  <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+                    <CheckCircle2 size={11} className="stroke-[2.5]" />
+                    Solución
+                  </span>
                 )}
               </div>
-              <div className="mt-4 flex flex-wrap justify-center gap-2 max-w-md">
-                {wordSearchResult.placedWords.map((w, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 bg-stone-100 text-stone-700 font-mono text-xs font-bold rounded-lg border border-stone-200"
-                  >
-                    {w.word}
-                  </span>
-                ))}
-              </div>
             </div>
-          )}
 
-          {/* 2. Crucigrama */}
-          {type === "crossword" && crosswordResult && (
-            <div className="space-y-6">
-              <div className="flex justify-center overflow-x-auto p-2">
+            {/* 1. Sopa de Letras */}
+            {type === "wordsearch" && wordSearchResult && (
+              <div className="flex flex-col items-center gap-5">
                 <div
-                  className="grid gap-0.5 p-3 bg-stone-100/60 rounded-2xl border border-stone-200"
-                  style={{
-                    gridTemplateColumns: `repeat(${crosswordResult.width}, minmax(0, 1fr))`,
-                  }}
+                  className="grid gap-1 p-2 bg-slate-50 rounded-xl border border-slate-200 inline-block shadow-2xs"
+                  style={{ gridTemplateColumns: `repeat(${wordSearchResult.size}, minmax(0, 1fr))` }}
                 >
-                  {crosswordResult.grid.map((row, r) =>
-                    row.map((cell, c) => {
-                      if (!cell) {
-                        return <div key={`${r}-${c}`} className="w-7 h-7 sm:w-8 sm:h-8" />;
-                      }
+                  {wordSearchResult.grid.map((row, r) =>
+                    row.map((char, c) => {
+                      const isSol =
+                        showSolution &&
+                        wordSearchResult.placedWords.some((w) =>
+                          Array.from({ length: w.word.length }).some((_, i) => {
+                            const py = w.y + w.direction[0] * i;
+                            const px = w.x + w.direction[1] * i;
+                            return py === r && px === c;
+                          })
+                        );
+
                       return (
                         <div
                           key={`${r}-${c}`}
-                          className={`relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-mono font-bold text-xs sm:text-sm border ${
-                            showSolution
-                              ? "bg-red-50 text-red-600 border-red-300 font-black"
-                              : "bg-white text-stone-900 border-stone-300"
-                          } rounded-xs shadow-2xs`}
+                          className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-mono text-xs sm:text-sm font-bold rounded transition-colors ${
+                            isSol
+                              ? "bg-rose-600 text-white shadow-xs font-black"
+                              : "bg-white text-slate-800 border border-slate-200/90"
+                          }`}
                         >
-                          {cell.number && (
-                            <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-stone-500 leading-none">
-                              {cell.number}
-                            </span>
-                          )}
-                          {showSolution ? cell.char : ""}
+                          {char}
                         </div>
                       );
                     })
                   )}
                 </div>
-              </div>
 
-              {/* Pistas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-                  <h4 className="font-bold text-stone-800 mb-2 border-b border-stone-200 pb-1">
-                    ➡️ Horizontales
+                {/* Palabras a buscar */}
+                <div className="w-full pt-4 border-t border-slate-100">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
+                    Palabras a encontrar:
                   </h4>
-                  <ul className="space-y-1">
-                    {crosswordResult.words
-                      .filter((w) => w.direction === "H")
-                      .map((w) => (
-                        <li key={w.number} className="text-stone-600">
-                          <strong>{w.number}.</strong> {w.clue || w.word}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-                  <h4 className="font-bold text-stone-800 mb-2 border-b border-stone-200 pb-1">
-                    ⬇️ Verticales
-                  </h4>
-                  <ul className="space-y-1">
-                    {crosswordResult.words
-                      .filter((w) => w.direction === "V")
-                      .map((w) => (
-                        <li key={w.number} className="text-stone-600">
-                          <strong>{w.number}.</strong> {w.clue || w.word}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 3. Anagramas */}
-          {type === "scramble" && scrambleResult && (
-            <div className="space-y-3">
-              {scrambleResult.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 bg-stone-50 rounded-2xl border border-stone-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 font-bold text-xs flex items-center justify-center font-mono">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <span className="font-mono text-base font-extrabold tracking-widest text-stone-800">
-                        {item.scrambled}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {wordSearchResult.placedWords.map((w, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 bg-slate-100 text-slate-700 font-mono text-xs font-semibold rounded-md border border-slate-200/80"
+                      >
+                        {w.word}
                       </span>
-                      {item.clue && <p className="text-xs text-stone-500 mt-0.5">{item.clue}</p>}
-                    </div>
+                    ))}
                   </div>
+                </div>
+              </div>
+            )}
 
-                  <div className="min-w-[120px] text-right">
-                    {showSolution ? (
-                      <span className="font-mono text-sm font-extrabold text-red-600 bg-red-100 px-3 py-1 rounded-lg">
-                        {item.original}
-                      </span>
-                    ) : (
-                      <span className="text-stone-400 font-mono tracking-widest text-sm">
-                        {"_ ".repeat(item.original.length)}
-                      </span>
+            {/* 2. Crucigrama */}
+            {type === "crossword" && crosswordResult && (
+              <div className="space-y-6">
+                <div className="flex justify-center overflow-x-auto p-1">
+                  <div
+                    className="grid gap-0.5 p-2 bg-slate-100/70 rounded-xl border border-slate-200"
+                    style={{
+                      gridTemplateColumns: `repeat(${crosswordResult.width}, minmax(0, 1fr))`,
+                    }}
+                  >
+                    {crosswordResult.grid.map((row, r) =>
+                      row.map((cell, c) => {
+                        if (!cell) {
+                          return <div key={`${r}-${c}`} className="w-6 h-6 sm:w-7 sm:h-7" />;
+                        }
+                        return (
+                          <div
+                            key={`${r}-${c}`}
+                            className={`relative w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-mono font-bold text-xs border ${
+                              showSolution
+                                ? "bg-rose-50 text-rose-700 border-rose-300 font-black"
+                                : "bg-white text-slate-900 border-slate-300"
+                            } rounded-xs shadow-2xs`}
+                          >
+                            {cell.number && (
+                              <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-slate-400 leading-none">
+                                {cell.number}
+                              </span>
+                            )}
+                            {showSolution ? cell.char : ""}
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {/* 4. Relacionar Columnas */}
-          {type === "matching" && matchingResult && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Columna A */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider">
-                    Columna A
-                  </h4>
-                  {matchingResult.pairs.map((p) => (
-                    <div
-                      key={p.id}
-                      className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-center justify-between text-xs font-bold text-stone-800"
-                    >
-                      <span className="w-5 h-5 rounded-full bg-stone-200 flex items-center justify-center text-[10px]">
-                        {p.id}
-                      </span>
-                      <span className="truncate mx-2">{p.leftText}</span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-stone-400" />
-                    </div>
-                  ))}
-                </div>
+                {/* Pistas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2 border-t border-slate-100">
+                  <div className="space-y-1.5">
+                    <h4 className="font-bold text-slate-800 pb-1 border-b border-slate-200">
+                      Horizontales
+                    </h4>
+                    <ul className="space-y-1">
+                      {crosswordResult.words
+                        .filter((w) => w.direction === "H")
+                        .map((w) => (
+                          <li key={w.number} className="text-slate-600 leading-relaxed">
+                            <strong className="text-slate-900">{w.number}.</strong> {w.clue || w.word}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
 
-                {/* Columna B */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider">
-                    Columna B
-                  </h4>
-                  {matchingResult.shuffledRight.map((r) => (
-                    <div
-                      key={r.id}
-                      className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-center justify-between text-xs font-medium text-stone-700"
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full bg-stone-400" />
-                      <span className="truncate mx-2">{r.text}</span>
-                      <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-700 font-bold flex items-center justify-center text-[10px]">
-                        {r.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {showSolution && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800">
-                  <strong className="block mb-1">🎯 Respuestas:</strong>
-                  <div className="flex flex-wrap gap-2">
-                    {matchingResult.solutions.map((s) => (
-                      <span key={s.leftId} className="bg-white px-2 py-1 rounded border border-red-200 font-mono">
-                        {s.leftId} ➔ {s.rightLabel}
-                      </span>
-                    ))}
+                  <div className="space-y-1.5">
+                    <h4 className="font-bold text-slate-800 pb-1 border-b border-slate-200">
+                      Verticales
+                    </h4>
+                    <ul className="space-y-1">
+                      {crosswordResult.words
+                        .filter((w) => w.direction === "V")
+                        .map((w) => (
+                          <li key={w.number} className="text-slate-600 leading-relaxed">
+                            <strong className="text-slate-900">{w.number}.</strong> {w.clue || w.word}
+                          </li>
+                        ))}
+                    </ul>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* 5. Criptograma */}
-          {type === "cryptogram" && cryptogramResult && (
-            <div className="space-y-5">
-              {/* Tabla de códigos */}
-              <div className="flex flex-wrap gap-1.5 justify-center p-3 bg-stone-50 rounded-xl border border-stone-200">
-                {cryptogramResult.cipherKey.map((k) => (
-                  <div key={k.letter} className="flex flex-col items-center bg-white px-2 py-1 rounded border border-stone-200 text-xs">
-                    <span className="font-bold text-stone-800">{k.letter}</span>
-                    <span className="text-[10px] text-stone-400 font-mono border-t border-stone-100 pt-0.5 w-full text-center">
-                      {k.code}
-                    </span>
-                  </div>
-                ))}
               </div>
+            )}
 
-              {/* Mensaje */}
-              <div className="flex flex-wrap gap-3 justify-center py-2">
-                {cryptogramResult.words.map((word, wIdx) => (
-                  <div key={wIdx} className="flex gap-1">
-                    {word.map((char, cIdx) => {
-                      if (!char.isLetter) {
-                        return (
-                          <span key={cIdx} className="self-end text-lg font-bold text-stone-800 pb-1">
-                            {char.original}
-                          </span>
-                        );
-                      }
-                      const show = showSolution || char.revealed;
-                      return (
-                        <div key={cIdx} className="flex flex-col items-center">
-                          <span
-                            className={`w-6 h-6 flex items-center justify-center font-bold text-xs border-b-2 ${
-                              show ? (showSolution && !char.revealed ? "text-red-600 font-black border-red-500" : "text-stone-800 border-stone-800") : "border-stone-400"
-                            }`}
-                          >
-                            {show ? char.original : ""}
-                          </span>
-                          <span className="text-[10px] font-mono text-stone-500 mt-1">{char.code}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 6. Texto con Huecos */}
-          {type === "cloze" && clozeResult && (
-            <div className="space-y-4">
-              {!showSolution && clozeResult.wordBank.length > 0 && (
-                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl">
-                  <h4 className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2">
-                    Banco de Palabras:
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {clozeResult.wordBank.map((w, idx) => (
-                      <span key={idx} className="px-2.5 py-1 bg-white rounded-lg border border-amber-200 font-semibold text-xs text-stone-800">
-                        {w}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-sm leading-loose text-stone-800">
-                {clozeResult.textWithBlanks.map((part, idx) => {
-                  if (!part.isBlank) return <span key={idx}>{part.text}</span>;
-                  return (
-                    <span
-                      key={idx}
-                      className={`inline-block px-2 py-0.5 mx-1 rounded border-b-2 font-semibold ${
-                        showSolution
-                          ? "bg-red-50 text-red-600 border-red-500"
-                          : "bg-white text-stone-400 border-stone-400"
-                      }`}
-                    >
-                      {showSolution ? part.text : `____ (${part.blankIndex})`}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 7. Rosco */}
-          {type === "rosco" && roscoResult && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-1.5 justify-center p-2 bg-blue-50/60 rounded-2xl border border-blue-200/70">
-                {roscoResult.items.map((item) => (
-                  <span
-                    key={item.letter}
-                    className="w-6 h-6 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center"
+            {/* 3. Anagramas */}
+            {type === "scramble" && scrambleResult && (
+              <div className="space-y-3">
+                {scrambleResult.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/50"
                   >
-                    {item.letter}
-                  </span>
-                ))}
-              </div>
-
-              <div className="max-h-[360px] overflow-y-auto space-y-2 pr-1">
-                {roscoResult.items.map((item) => (
-                  <div key={item.letter} className="p-2.5 bg-stone-50 rounded-xl border border-stone-200 text-xs">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-blue-700">
-                        [{item.letter}] {item.prefixType === "starts" ? "Empieza por" : "Contiene"}
+                    <div className="flex items-center gap-3">
+                      <span className="w-5 h-5 rounded-md bg-slate-200/80 text-slate-700 font-mono font-bold text-xs flex items-center justify-center">
+                        {idx + 1}
                       </span>
-                      {showSolution && (
-                        <span className="font-mono font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">
-                          {item.word}
+                      <div>
+                        <span className="font-mono text-sm sm:text-base font-bold tracking-widest text-slate-900">
+                          {item.scrambled}
+                        </span>
+                        {item.clue && (
+                          <p className="text-[11px] text-slate-500 mt-0.5">{item.clue}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="min-w-[120px] text-right">
+                      {showSolution ? (
+                        <span className="font-mono text-sm font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded border border-rose-200">
+                          {item.original}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-mono tracking-widest text-sm">
+                          {"_ ".repeat(item.original.length)}
                         </span>
                       )}
                     </div>
-                    <p className="text-stone-600">{item.clue}</p>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 8. Sudoku */}
-          {type === "sudoku" && sudokuResult && (
-            <div className="flex justify-center">
-              <div
-                className="grid gap-0 bg-stone-800 p-1 rounded-xl shadow-md"
-                style={{
-                  gridTemplateColumns: `repeat(${sudokuResult.size}, minmax(0, 1fr))`,
-                }}
-              >
-                {Array.from({ length: sudokuResult.size }, (_, r) =>
-                  Array.from({ length: sudokuResult.size }, (_, c) => {
-                    const initialVal = sudokuResult.initialGrid[r][c];
-                    const solVal = sudokuResult.solutionGrid[r][c];
-                    const isInitial = initialVal !== null;
-
-                    const borderRight = (c + 1) % sudokuResult.subgridWidth === 0 && c !== sudokuResult.size - 1;
-                    const borderBottom = (r + 1) % sudokuResult.subgridHeight === 0 && r !== sudokuResult.size - 1;
-
-                    return (
+            {/* 4. Relacionar Columnas */}
+            {type === "matching" && matchingResult && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Columna A */}
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block border-b border-slate-200 pb-1">
+                      Columna A
+                    </span>
+                    {matchingResult.pairs.map((p) => (
                       <div
-                        key={`${r}-${c}`}
-                        className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center font-bold text-sm sm:text-base border border-stone-200 ${
-                          borderRight ? "border-r-3 border-r-stone-900" : ""
-                        } ${borderBottom ? "border-b-3 border-b-stone-900" : ""} ${
-                          showSolution && !isInitial
-                            ? "bg-red-50 text-red-600 font-extrabold"
-                            : isInitial
-                            ? "bg-stone-100 text-stone-900"
-                            : "bg-white text-stone-400"
-                        }`}
+                        key={p.id}
+                        className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-900"
                       >
-                        {showSolution ? solVal : isInitial ? initialVal : ""}
+                        <span className="w-5 h-5 rounded bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">
+                          {p.id}
+                        </span>
+                        <span className="truncate mx-2">{p.leftText}</span>
+                        <span className="w-2 h-2 rounded-full bg-slate-400" />
                       </div>
-                    );
-                  })
+                    ))}
+                  </div>
+
+                  {/* Columna B */}
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block border-b border-slate-200 pb-1">
+                      Columna B
+                    </span>
+                    {matchingResult.shuffledRight.map((r) => (
+                      <div
+                        key={r.id}
+                        className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs font-medium text-slate-700"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-slate-400" />
+                        <span className="truncate mx-2">{r.text}</span>
+                        <span className="w-5 h-5 rounded bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-[10px]">
+                          {r.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {showSolution && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900">
+                    <strong className="block mb-1.5 font-bold">Solucionario de pares:</strong>
+                    <div className="flex flex-wrap gap-2">
+                      {matchingResult.solutions.map((s) => (
+                        <span key={s.leftId} className="bg-white px-2 py-0.5 rounded border border-rose-200 font-mono font-semibold">
+                          {s.leftId} ➔ {s.rightLabel}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 9. Pirámides Matemáticas */}
-          {type === "mathpyramid" && mathPyramidResult && (
-            <div className="space-y-6">
-              {mathPyramidResult.pyramids.map((pyramid, pIdx) => (
-                <div key={pyramid.id} className="flex flex-col items-center">
-                  <span className="text-xs font-bold text-stone-400 mb-2">Pirámide #{pIdx + 1}</span>
-                  {pyramid.grid.map((row, rIdx) => (
-                    <div key={rIdx} className="flex justify-center">
-                      {row.map((cell, cIdx) => {
-                        const solVal = pyramid.solutionGrid[rIdx][cIdx];
-                        const isMissing = !cell.revealed;
-                        const display = showSolution ? solVal : cell.revealed ? cell.value : "";
+            {/* 5. Criptograma */}
+            {type === "cryptogram" && cryptogramResult && (
+              <div className="space-y-5">
+                <div className="flex flex-wrap gap-1 justify-center p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  {cryptogramResult.cipherKey.map((k) => (
+                    <div key={k.letter} className="flex flex-col items-center bg-white px-1.5 py-1 rounded border border-slate-200 text-xs">
+                      <span className="font-bold text-slate-900">{k.letter}</span>
+                      <span className="text-[10px] text-slate-400 font-mono border-t border-slate-100 pt-0.5 w-full text-center">
+                        {k.code}
+                      </span>
+                    </div>
+                  ))}
+                </div>
 
+                <div className="flex flex-wrap gap-3 justify-center py-3">
+                  {cryptogramResult.words.map((word, wIdx) => (
+                    <div key={wIdx} className="flex gap-1">
+                      {word.map((char, cIdx) => {
+                        if (!char.isLetter) {
+                          return (
+                            <span key={cIdx} className="self-end text-lg font-bold text-slate-900 pb-1">
+                              {char.original}
+                            </span>
+                          );
+                        }
+                        const show = showSolution || char.revealed;
                         return (
-                          <div
-                            key={cIdx}
-                            className={`w-12 h-9 sm:w-14 sm:h-10 border border-stone-700 flex items-center justify-center font-bold text-xs sm:text-sm ${
-                              showSolution && isMissing
-                                ? "bg-red-50 text-red-600 font-black border-red-500"
-                                : cell.revealed
-                                ? "bg-stone-100 text-stone-800"
-                                : "bg-white text-stone-900"
-                            }`}
-                          >
-                            {display}
+                          <div key={cIdx} className="flex flex-col items-center">
+                            <span
+                              className={`w-6 h-6 flex items-center justify-center font-bold text-xs border-b-2 ${
+                                show
+                                  ? showSolution && !char.revealed
+                                    ? "text-rose-700 font-black border-rose-500"
+                                    : "text-slate-900 border-slate-900"
+                                  : "border-slate-300"
+                              }`}
+                            >
+                              {show ? char.original : ""}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 mt-1">{char.code}</span>
                           </div>
                         );
                       })}
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* 10. Crucigrama Numérico */}
-          {type === "crossmath" && crossMathResult && (
-            <div className="flex justify-center">
-              <div className="grid grid-cols-5 gap-2 p-4 bg-stone-50 rounded-2xl border border-stone-200">
-                {crossMathResult.grid.map((row, r) =>
-                  row.map((cell, c) => {
-                    if (cell.type === "empty") {
-                      return <div key={`${r}-${c}`} className="w-10 h-10" />;
-                    }
-                    if (cell.type === "operator") {
-                      return (
-                        <div
-                          key={`${r}-${c}`}
-                          className="w-10 h-10 flex items-center justify-center font-bold text-lg text-stone-500"
-                        >
-                          {cell.value}
-                        </div>
-                      );
-                    }
-                    const isBlank = cell.isBlank;
-                    const showSol = showSolution && isBlank;
-                    const val = showSol ? cell.value : !isBlank ? cell.value : "";
+            {/* 6. Texto con Huecos */}
+            {type === "cloze" && clozeResult && (
+              <div className="space-y-4">
+                {!showSolution && clozeResult.wordBank.length > 0 && (
+                  <div className="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                      Banco de Palabras:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {clozeResult.wordBank.map((w, idx) => (
+                        <span key={idx} className="px-2.5 py-1 bg-white rounded border border-slate-200 text-xs font-semibold text-slate-800">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
+                <div className="text-sm leading-loose text-slate-800 p-2">
+                  {clozeResult.textWithBlanks.map((part, idx) => {
+                    if (!part.isBlank) return <span key={idx}>{part.text}</span>;
                     return (
-                      <div
-                        key={`${r}-${c}`}
-                        className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold text-sm shadow-xs ${
-                          showSol
-                            ? "bg-red-50 text-red-600 border-red-400 font-black"
-                            : isBlank
-                            ? "bg-sky-50 border-sky-300 text-transparent"
-                            : "bg-white border-stone-300 text-stone-900"
+                      <span
+                        key={idx}
+                        className={`inline-block px-2 mx-1 border-b-2 font-semibold ${
+                          showSolution
+                            ? "bg-rose-50 text-rose-700 border-rose-500 font-bold"
+                            : "bg-slate-50 text-slate-400 border-slate-400"
                         }`}
                       >
-                        {val}
-                      </div>
+                        {showSolution ? part.text : `_____ (${part.blankIndex})`}
+                      </span>
                     );
-                  })
-                )}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 11. Laberinto */}
-          {type === "maze" && mazeResult && (
-            <div className="flex flex-col items-center">
-              <div className="flex justify-between w-64 text-xs font-bold mb-1">
-                <span className="text-emerald-600">⬇ ENTRADA</span>
-                <span className="text-red-600">SALIDA ⬇</span>
+            {/* 7. Rosco */}
+            {type === "rosco" && roscoResult && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-1 justify-center p-2 bg-slate-50 rounded-xl border border-slate-200">
+                  {roscoResult.items.map((item) => (
+                    <span
+                      key={item.letter}
+                      className="w-5 h-5 rounded-full bg-slate-900 text-white font-mono font-bold text-[10px] flex items-center justify-center"
+                    >
+                      {item.letter}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
+                  {roscoResult.items.map((item) => (
+                    <div key={item.letter} className="p-2 rounded-lg border border-slate-200 bg-white text-xs">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="font-bold text-blue-700">
+                          [{item.letter}] {item.prefixType === "starts" ? "Empieza por" : "Contiene"}
+                        </span>
+                        {showSolution && (
+                          <span className="font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            {item.word}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-600">{item.clue}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="inline-block bg-white border-2 border-stone-900 p-1 rounded-lg shadow-sm">
-                {mazeResult.grid.map((row, r) => (
-                  <div key={r} className="flex">
-                    {row.map((cell, c) => {
-                      const isSol =
-                        showSolution &&
-                        mazeResult.solutionPath.some(([pr, pc]) => pr === r && pc === c);
+            )}
+
+            {/* 8. Sudoku */}
+            {type === "sudoku" && sudokuResult && (
+              <div className="flex justify-center py-2">
+                <div
+                  className="grid gap-0 bg-slate-900 p-0.5 rounded-lg shadow-sm border border-slate-900"
+                  style={{
+                    gridTemplateColumns: `repeat(${sudokuResult.size}, minmax(0, 1fr))`
+                  }}
+                >
+                  {Array.from({ length: sudokuResult.size }, (_, r) =>
+                    Array.from({ length: sudokuResult.size }, (_, c) => {
+                      const initialVal = sudokuResult.initialGrid[r][c];
+                      const solVal = sudokuResult.solutionGrid[r][c];
+                      const isInitial = initialVal !== null;
+
+                      const borderRight = (c + 1) % sudokuResult.subgridWidth === 0 && c !== sudokuResult.size - 1;
+                      const borderBottom = (r + 1) % sudokuResult.subgridHeight === 0 && r !== sudokuResult.size - 1;
 
                       return (
                         <div
                           key={`${r}-${c}`}
-                          className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
-                          style={{
-                            borderTop: cell.north ? "1.5px solid #1c1917" : "none",
-                            borderBottom: cell.south ? "1.5px solid #1c1917" : "none",
-                            borderLeft: cell.west ? "1.5px solid #1c1917" : "none",
-                            borderRight: cell.east ? "1.5px solid #1c1917" : "none",
-                            backgroundColor: isSol ? "#fee2e2" : "#ffffff",
-                          }}
+                          className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center font-bold text-sm border border-slate-200 ${
+                            borderRight ? "border-r-2 border-r-slate-900" : ""
+                          } ${borderBottom ? "border-b-2 border-b-slate-900" : ""} ${
+                            showSolution && !isInitial
+                              ? "bg-rose-50 text-rose-700 font-black"
+                              : isInitial
+                              ? "bg-slate-100 text-slate-900"
+                              : "bg-white text-slate-300"
+                          }`}
                         >
-                          {isSol && <div className="w-1.5 h-1.5 rounded-full bg-red-600" />}
+                          {showSolution ? solVal : isInitial ? initialVal : ""}
                         </div>
                       );
-                    })}
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 9. Pirámides Matemáticas */}
+            {type === "mathpyramid" && mathPyramidResult && (
+              <div className="space-y-6">
+                {mathPyramidResult.pyramids.map((pyramid, pIdx) => (
+                  <div key={pyramid.id} className="flex flex-col items-center">
+                    <span className="text-[11px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                      Pirámide #{pIdx + 1}
+                    </span>
+                    {pyramid.grid.map((row, rIdx) => (
+                      <div key={rIdx} className="flex justify-center">
+                        {row.map((cell, cIdx) => {
+                          const solVal = pyramid.solutionGrid[rIdx][cIdx];
+                          const isMissing = !cell.revealed;
+                          const display = showSolution ? solVal : cell.revealed ? cell.value : "";
+
+                          return (
+                            <div
+                              key={cIdx}
+                              className={`w-11 h-8 sm:w-13 sm:h-9 border border-slate-700 flex items-center justify-center font-bold text-xs sm:text-sm ${
+                                showSolution && isMissing
+                                  ? "bg-rose-50 text-rose-700 font-black border-rose-500"
+                                  : cell.revealed
+                                  ? "bg-slate-100 text-slate-900"
+                                  : "bg-white text-slate-900"
+                              }`}
+                            >
+                              {display}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 12. Pixel Art por Coordenadas */}
-          {type === "pixelart" && pixelArtResult && (
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <div className="inline-block bg-stone-50 p-3 rounded-2xl border border-stone-200">
-                  {/* Header de columnas A, B, C... */}
-                  <div className="flex pl-6 mb-1">
-                    {"ABCDEFGHIJKLMN"
-                      .slice(0, pixelArtResult.cols)
-                      .split("")
-                      .map((l) => (
-                        <span key={l} className="w-6 text-center text-[10px] font-bold text-stone-500">
-                          {l}
-                        </span>
-                      ))}
-                  </div>
+            {/* 10. Crucigrama Numérico */}
+            {type === "crossmath" && crossMathResult && (
+              <div className="flex justify-center py-2">
+                <div className="grid grid-cols-5 gap-1.5 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  {crossMathResult.grid.map((row, r) =>
+                    row.map((cell, c) => {
+                      if (cell.type === "empty") {
+                        return <div key={`${r}-${c}`} className="w-9 h-9" />;
+                      }
+                      if (cell.type === "operator") {
+                        return (
+                          <div
+                            key={`${r}-${c}`}
+                            className="w-9 h-9 flex items-center justify-center font-bold text-base text-slate-500"
+                          >
+                            {cell.value}
+                          </div>
+                        );
+                      }
+                      const isBlank = cell.isBlank;
+                      const showSol = showSolution && isBlank;
+                      const val = showSol ? cell.value : !isBlank ? cell.value : "";
 
-                  {pixelArtResult.grid.map((row, r) => (
-                    <div key={r} className="flex items-center">
-                      <span className="w-6 text-[10px] font-bold text-stone-500 text-center">
-                        {r + 1}
-                      </span>
-                      {row.map((colorCode, c) => {
-                        const hex = colorCode ? pixelArtResult.colorMap[colorCode] : "#ffffff";
-                        const bg = showSolution && colorCode ? hex : "#ffffff";
+                      return (
+                        <div
+                          key={`${r}-${c}`}
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center font-bold text-sm shadow-2xs ${
+                            showSol
+                              ? "bg-rose-50 text-rose-700 border-rose-400 font-black"
+                              : isBlank
+                              ? "bg-white border-blue-400 text-transparent"
+                              : "bg-white border-slate-300 text-slate-900"
+                          }`}
+                        >
+                          {val}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 11. Laberinto */}
+            {type === "maze" && mazeResult && (
+              <div className="flex flex-col items-center py-2">
+                <div className="flex justify-between w-60 text-xs font-bold mb-1">
+                  <span className="text-emerald-700">⬇ ENTRADA</span>
+                  <span className="text-rose-700">SALIDA ⬇</span>
+                </div>
+                <div className="inline-block bg-white border border-slate-900 p-0.5 rounded shadow-xs">
+                  {mazeResult.grid.map((row, r) => (
+                    <div key={r} className="flex">
+                      {row.map((cell, c) => {
+                        const isSol =
+                          showSolution &&
+                          mazeResult.solutionPath.some(([pr, pc]) => pr === r && pc === c);
 
                         return (
                           <div
                             key={`${r}-${c}`}
-                            className="w-6 h-6 border border-stone-300 transition-colors"
-                            style={{ backgroundColor: bg }}
-                          />
+                            className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
+                            style={{
+                              borderTop: cell.north ? "1.5px solid #0f172a" : "none",
+                              borderBottom: cell.south ? "1.5px solid #0f172a" : "none",
+                              borderLeft: cell.west ? "1.5px solid #0f172a" : "none",
+                              borderRight: cell.east ? "1.5px solid #0f172a" : "none",
+                              backgroundColor: isSol ? "#ffe4e6" : "#ffffff",
+                            }}
+                          >
+                            {isSol && <div className="w-1.5 h-1.5 rounded-full bg-rose-600" />}
+                          </div>
                         );
                       })}
                     </div>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Guía de instrucciones */}
-              <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-xs space-y-2">
-                <h4 className="font-bold text-stone-700 uppercase tracking-wider text-[11px]">
-                  Guía de Colores y Coordenadas:
-                </h4>
-                {pixelArtResult.instructions.map((inst) => (
-                  <div key={inst.colorCode} className="text-stone-700">
-                    <span className="inline-flex items-center gap-1.5 font-bold mr-2">
-                      <span
-                        className="w-3 h-3 rounded-xs border border-stone-400"
-                        style={{ backgroundColor: inst.hex }}
-                      />
-                      {inst.colorName}:
-                    </span>
-                    <span className="text-stone-500">{inst.coordinates.join(", ")}</span>
+            {/* 12. Pixel Art por Coordenadas */}
+            {type === "pixelart" && pixelArtResult && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <div className="inline-block bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div className="flex pl-5 mb-0.5">
+                      {"ABCDEFGHIJKLMN"
+                        .slice(0, pixelArtResult.cols)
+                        .split("")
+                        .map((l) => (
+                          <span key={l} className="w-5 text-center text-[10px] font-bold text-slate-400">
+                            {l}
+                          </span>
+                        ))}
+                    </div>
+
+                    {pixelArtResult.grid.map((row, r) => (
+                      <div key={r} className="flex items-center">
+                        <span className="w-5 text-[10px] font-bold text-slate-400 text-center">
+                          {r + 1}
+                        </span>
+                        {row.map((colorCode, c) => {
+                          const hex = colorCode ? pixelArtResult.colorMap[colorCode] : "#ffffff";
+                          const bg = showSolution && colorCode ? hex : "#ffffff";
+
+                          return (
+                            <div
+                              key={`${r}-${c}`}
+                              className="w-5 h-5 border border-slate-300"
+                              style={{ backgroundColor: bg }}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+                  <h4 className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                    Guía de Colores y Coordenadas:
+                  </h4>
+                  {pixelArtResult.instructions.map((inst) => (
+                    <div key={inst.colorCode} className="text-slate-700 leading-relaxed">
+                      <span className="inline-flex items-center gap-1.5 font-bold mr-1.5">
+                        <span
+                          className="w-2.5 h-2.5 rounded-xs border border-slate-400"
+                          style={{ backgroundColor: inst.hex }}
+                        />
+                        {inst.colorName}:
+                      </span>
+                      <span className="text-slate-500">{inst.coordinates.join(", ")}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Botones de Descarga en PDF A4 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => handleDownload(false)}
-              disabled={downloading !== null}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white text-xs font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
-            >
-              {downloading === "activity" ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Printer size={16} />
-              )}
-              Descargar Ficha Alumno (PDF A4)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDownload(true)}
-              disabled={downloading !== null}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-amber-100 hover:bg-amber-200 active:scale-[0.98] text-amber-900 border border-amber-300 text-xs font-bold shadow-xs transition-all cursor-pointer disabled:opacity-50"
-            >
-              {downloading === "solution" ? (
-                <Loader2 size={16} className="animate-spin text-amber-900" />
-              ) : (
-                <FileText size={16} />
-              )}
-              Descargar Solucionario (PDF A4)
-            </button>
+            )}
           </div>
+        )}
+      </div>
+
+      {/* Action Footer with High-End Print Buttons */}
+      {hasData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => handleDownload(false)}
+            disabled={downloading !== null}
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer disabled:opacity-50"
+          >
+            {downloading === "activity" ? (
+              <Loader2 size={15} className="animate-spin text-white" />
+            ) : (
+              <Printer size={15} />
+            )}
+            Descargar Ficha Alumno (PDF A4)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleDownload(true)}
+            disabled={downloading !== null}
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-800 border border-slate-300 text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer disabled:opacity-50"
+          >
+            {downloading === "solution" ? (
+              <Loader2 size={15} className="animate-spin text-slate-800" />
+            ) : (
+              <FileCheck2 size={15} className="text-slate-600" />
+            )}
+            Descargar Solucionario Docente (PDF A4)
+          </button>
         </div>
       )}
     </div>

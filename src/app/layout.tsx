@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${outfit.variable} ${plusJakarta.variable} ${spaceMono.variable} antialiased selection:bg-orange-200 selection:text-orange-900`}
+        className={`${outfit.variable} ${plusJakarta.variable} ${spaceMono.variable} antialiased selection:bg-blue-100 selection:text-blue-900`}
       >
         {children}
       </body>

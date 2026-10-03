@@ -5,13 +5,11 @@ import dynamic from "next/dynamic";
 import {
   Plus,
   Trash2,
-  Sparkles,
   RotateCcw,
-  GraduationCap,
   Loader2,
   RefreshCw,
-  Lightbulb,
-  FileCheck,
+  Printer,
+  SlidersHorizontal,
 } from "lucide-react";
 import { ActivityCategoryPicker } from "@/components/ActivityCategoryPicker";
 import { ACTIVITIES } from "@/lib/registry";
@@ -32,15 +30,15 @@ import {
   PIXEL_TEMPLATES,
 } from "@/lib/generators/coordinatePixelArt";
 
-// Importación dinámica con ssr: false para evitar discrepancias de Math.random()
+// Dynamic import with ssr: false to prevent hydration divergence
 const ActivityPreview = dynamic(
   () => import("@/components/ActivityPreview").then((mod) => mod.ActivityPreview),
   {
     ssr: false,
     loading: () => (
-      <div className="bg-white rounded-3xl border border-stone-200/90 p-12 flex flex-col items-center justify-center min-h-[420px] text-stone-400">
-        <Loader2 className="animate-spin text-orange-500 mb-2" size={32} />
-        <p className="text-xs font-semibold text-stone-600">Cargando visor interactivo...</p>
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-12 flex flex-col items-center justify-center min-h-[460px] text-slate-400">
+        <Loader2 className="animate-spin text-slate-700 mb-2" size={28} />
+        <p className="text-xs font-semibold text-slate-600">Cargando mesa de trabajo...</p>
       </div>
     ),
   }
@@ -104,16 +102,15 @@ export default function Home() {
     () => false
   );
 
-  // Selector general
   const [type, setType] = useState<ActivityType>("wordsearch");
   const [title, setTitle] = useState("Animales del Mundo");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [regenerateKey, setRegenerateKey] = useState(0);
 
-  // Estado para actividades basadas en palabras
+  // Word-based activities
   const [items, setItems] = useState<WordItem[]>(PRESETS.animales.items);
 
-  // Estado para actividades de texto (Criptograma y Cloze)
+  // Text-based activities
   const [cryptoPhrase, setCryptoPhrase] = useState(
     "EL SOL ES LA ESTRELLA MAS CERCANA A NUESTRO PLANETA TIERRA"
   );
@@ -122,18 +119,18 @@ export default function Home() {
     "Los [planetas] giran alrededor del [sol] describiendo órbitas elípticas. La [tierra] es el tercer planeta y el único donde se conoce la existencia de [vida]. Su satélite natural es la [luna]."
   );
 
-  // Estado para Sudoku
+  // Sudoku state
   const [sudokuSize, setSudokuSize] = useState<4 | 6 | 9>(9);
   const [sudokuEmojis, setSudokuEmojis] = useState(false);
 
-  // Estado para Pirámides Matemáticas
+  // Pyramid state
   const [pyramidLevels, setPyramidLevels] = useState<number>(4);
   const [pyramidCount, setPyramidCount] = useState<number>(2);
 
-  // Estado para Laberinto
+  // Maze state
   const [mazeSize, setMazeSize] = useState<number>(15);
 
-  // Estado para Pixel Art
+  // Pixel Art state
   const [pixelArtKey, setPixelArtKey] = useState<string>("corazon");
 
   const handleSelectActivity = (newType: ActivityType) => {
@@ -170,7 +167,7 @@ export default function Home() {
     setItems(preset.items);
   };
 
-  // Generadores Reactivos (useMemo)
+  // Reactive generator computations
   const wordSearchResult = useMemo(() => {
     void regenerateKey;
     if (!isMounted || type !== "wordsearch") return null;
@@ -248,43 +245,41 @@ export default function Home() {
   const validWordsCount = items.filter((i) => i.word.trim().length > 0).length;
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-stone-800 pb-20 selection:bg-orange-200 selection:text-orange-900">
-      {/* Barra superior con identidad EduLúdica */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-stone-200/90 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 via-amber-500 to-amber-400 text-white flex items-center justify-center shadow-md shadow-orange-500/20 ring-4 ring-orange-100">
-              <GraduationCap size={24} className="stroke-[2.2]" />
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-24">
+      {/* Studio Header */}
+      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Brand Monogram */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-xs font-mono">
+              GA
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-stone-900 font-heading">
+                <span className="text-base font-extrabold tracking-tight text-slate-950 font-heading">
                   GenAct
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-orange-100 text-orange-800 border border-orange-200/60">
-                  Edición Suite 12 Actividades
+                <span className="text-[10px] font-semibold text-slate-500 font-mono border-l border-slate-200 pl-2">
+                  Atelier Editorial A4
                 </span>
               </div>
-              <p className="text-xs text-stone-500 hidden sm:block font-medium">
-                Generador integral de pasatiempos y fichas didácticas en PDF A4
-              </p>
             </div>
           </div>
 
-          {/* Selector de Presets Rápidos */}
+          {/* Quick Presets */}
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-stone-400 font-semibold hidden md:inline mr-1 text-[11px] uppercase tracking-wider">
-              Temas:
+            <span className="text-slate-400 font-medium hidden md:inline mr-1 text-[11px]">
+              Temas listos:
             </span>
             {Object.entries(PRESETS).map(([key, p]) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => loadPreset(key as keyof typeof PRESETS)}
-                className={`px-3 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition-all duration-150 cursor-pointer flex items-center gap-1.5 active:scale-[0.98] ${
                   title === p.title
-                    ? "bg-orange-50 text-orange-800 border-orange-300 shadow-xs"
-                    : "border-stone-200 bg-white hover:bg-stone-50 text-stone-700 hover:border-stone-300"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
                 }`}
               >
                 <span>{p.emoji}</span>
@@ -295,18 +290,16 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Contenedor principal de 2 columnas */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Columna Izquierda: Configuración y Datos (5 columnas) */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Tarjeta 1: Catálogo y Configuración de Actividad */}
-            <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-6 sm:p-7 space-y-5">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3.5">
-                <h2 className="text-base font-bold text-stone-900 flex items-center gap-2 font-heading">
-                  <div className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
-                    <Sparkles size={16} />
-                  </div>
+      {/* Main Two-Column Studio Layout */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+          {/* Left Column: Configuration & Content (5 columns) */}
+          <div className="lg:col-span-5 space-y-5">
+            {/* Card 1: Activity Format & General Options */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h2 className="text-xs font-bold text-slate-900 flex items-center gap-2 tracking-tight uppercase">
+                  <SlidersHorizontal size={14} className="text-slate-500" />
                   Formato de Actividad
                 </h2>
                 <div className="flex items-center gap-2">
@@ -314,22 +307,18 @@ export default function Home() {
                     type="button"
                     onClick={() => setRegenerateKey((k) => k + 1)}
                     title="Generar nueva variación aleatoria"
-                    className="p-1.5 text-stone-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
+                    className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium active:scale-[0.97]"
                   >
-                    <RefreshCw size={14} />
-                    <span className="hidden sm:inline">Regenerar</span>
+                    <RefreshCw size={12} className="stroke-[2.2]" />
+                    <span>Regenerar</span>
                   </button>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 flex items-center gap-1">
-                    <FileCheck size={12} className="text-teal-600" />
-                    A4
-                  </span>
                 </div>
               </div>
 
-              {/* Selector de Categorías y Actividades */}
+              {/* Categorized Activity Picker */}
               <div>
-                <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-                  1. Selecciona el Tipo de Juego
+                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  Tipo de Juego
                 </label>
                 <ActivityCategoryPicker
                   selectedType={type}
@@ -337,46 +326,46 @@ export default function Home() {
                 />
               </div>
 
-              {/* Título de la Ficha */}
+              {/* Title Input */}
               <div>
-                <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-                  2. Título de la Ficha Imprimible
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Título de la Ficha
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ej: Repaso de Ciencias Naturales"
-                  className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none text-sm font-semibold transition-all bg-stone-50/50 hover:bg-white focus:bg-white text-stone-900"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-3 focus:ring-blue-600/10 outline-none text-xs font-semibold transition-all bg-white text-slate-900 shadow-2xs"
                 />
               </div>
 
-              {/* Controles de Dificultad para actividades que la soportan */}
+              {/* Difficulty Controls */}
               {["wordsearch", "cryptogram", "sudoku", "mathpyramid", "crossmath"].includes(
                 type
               ) && (
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-                    3. Nivel de Dificultad
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Nivel de Dificultad
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { id: "easy", label: "Fácil", badge: "🟢 Inicial" },
-                      { id: "medium", label: "Medio", badge: "🟡 Estándar" },
-                      { id: "hard", label: "Difícil", badge: "🔴 Reto" },
+                      { id: "easy", label: "Fácil", badge: "Inicial" },
+                      { id: "medium", label: "Medio", badge: "Estándar" },
+                      { id: "hard", label: "Difícil", badge: "Reto" },
                     ].map((d) => (
                       <button
                         key={d.id}
                         type="button"
                         onClick={() => setDifficulty(d.id as Difficulty)}
-                        className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                        className={`py-2 px-1 rounded-xl border text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center active:scale-[0.98] ${
                           difficulty === d.id
-                            ? "bg-orange-50 border-orange-400 text-orange-900 ring-2 ring-orange-200 shadow-xs"
-                            : "bg-white border-stone-200 hover:border-stone-300 text-stone-700"
+                            ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                            : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
                         }`}
                       >
                         <span className="text-xs font-bold">{d.label}</span>
-                        <span className="text-[9px] font-semibold text-stone-400 mt-0.5">
+                        <span className="text-[10px] opacity-70 mt-0.5 font-medium">
                           {d.badge}
                         </span>
                       </button>
@@ -385,11 +374,11 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Controles específicos para Sudoku */}
+              {/* Sudoku Controls */}
               {type === "sudoku" && (
-                <div className="space-y-3 pt-1 border-t border-stone-100">
-                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Tamaño de Cuadrícula
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Tamaño del Tablero
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
@@ -401,10 +390,10 @@ export default function Home() {
                         key={s.size}
                         type="button"
                         onClick={() => setSudokuSize(s.size as 4 | 6 | 9)}
-                        className={`py-2 px-1 text-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
                           sudokuSize === s.size
-                            ? "bg-stone-900 text-white border-stone-900"
-                            : "bg-stone-50 text-stone-700 border-stone-200"
+                            ? "bg-slate-900 text-white border-slate-900 font-bold"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                         }`}
                       >
                         {s.label}
@@ -412,24 +401,24 @@ export default function Home() {
                     ))}
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer pt-1">
+                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer pt-1">
                     <input
                       type="checkbox"
                       checked={sudokuEmojis}
                       onChange={(e) => setSudokuEmojis(e.target.checked)}
-                      className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-stone-300"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
                     />
-                    Modo infantil con emojis (🐱🐶🐰🦊)
+                    Modo infantil con iconos animales (🐱🐶🐰🦊)
                   </label>
                 </div>
               )}
 
-              {/* Controles específicos para Pirámides Matemáticas */}
+              {/* Math Pyramid Controls */}
               {type === "mathpyramid" && (
-                <div className="space-y-3 pt-1 border-t border-stone-100">
+                <div className="space-y-3 pt-2 border-t border-slate-100">
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">
-                      Altura de la Pirámide
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Pisos de la Pirámide
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {[3, 4].map((lvl) => (
@@ -437,10 +426,10 @@ export default function Home() {
                           key={lvl}
                           type="button"
                           onClick={() => setPyramidLevels(lvl)}
-                          className={`py-2 text-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                          className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
                             pyramidLevels === lvl
-                              ? "bg-stone-900 text-white border-stone-900"
-                              : "bg-stone-50 text-stone-700 border-stone-200"
+                              ? "bg-slate-900 text-white border-slate-900 font-bold"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                           }`}
                         >
                           {lvl} Niveles
@@ -450,8 +439,8 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">
-                      Pirámides por Hoja
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Cantidad de Ejercicios por Hoja
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[1, 2, 3].map((cnt) => (
@@ -459,10 +448,10 @@ export default function Home() {
                           key={cnt}
                           type="button"
                           onClick={() => setPyramidCount(cnt)}
-                          className={`py-2 text-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                          className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
                             pyramidCount === cnt
-                              ? "bg-stone-900 text-white border-stone-900"
-                              : "bg-stone-50 text-stone-700 border-stone-200"
+                              ? "bg-slate-900 text-white border-slate-900 font-bold"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                           }`}
                         >
                           {cnt} {cnt === 1 ? "Pirámide" : "Pirámides"}
@@ -473,10 +462,10 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Controles específicos para Laberinto */}
+              {/* Maze Controls */}
               {type === "maze" && (
-                <div className="space-y-3 pt-1 border-t border-stone-100">
-                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider">
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <label className="block text-xs font-semibold text-slate-700">
                     Complejidad del Laberinto
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -489,10 +478,10 @@ export default function Home() {
                         key={m.size}
                         type="button"
                         onClick={() => setMazeSize(m.size)}
-                        className={`py-2 px-1 text-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
                           mazeSize === m.size
-                            ? "bg-stone-900 text-white border-stone-900"
-                            : "bg-stone-50 text-stone-700 border-stone-200"
+                            ? "bg-slate-900 text-white border-slate-900 font-bold"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                         }`}
                       >
                         {m.label}
@@ -502,11 +491,11 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Controles específicos para Pixel Art */}
+              {/* Pixel Art Controls */}
               {type === "pixelart" && (
-                <div className="space-y-3 pt-1 border-t border-stone-100">
-                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Dibujo / Plantilla
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Dibujo / Mosaico
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.values(PIXEL_TEMPLATES).map((tmpl) => (
@@ -514,83 +503,83 @@ export default function Home() {
                         key={tmpl.id}
                         type="button"
                         onClick={() => setPixelArtKey(tmpl.id)}
-                        className={`py-2 px-2 text-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        className={`py-2 px-1 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
                           pixelArtKey === tmpl.id
-                            ? "bg-orange-50 border-orange-400 text-orange-900 ring-2 ring-orange-200"
-                            : "bg-stone-50 text-stone-700 border-stone-200"
+                            ? "bg-slate-900 text-white border-slate-900 font-bold"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                         }`}
                       >
-                        {tmpl.name}
+                        {tmpl.name.split(" ")[0]}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Callout pedagógico */}
-              <div className="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5">
-                <div className="p-1 rounded-lg bg-amber-100 text-amber-700 shrink-0 mt-0.5">
-                  <Lightbulb size={15} />
-                </div>
-                <div className="leading-relaxed text-[11.5px]">
-                  <strong>Ajuste óptico A4:</strong> Cada actividad calcula automáticamente
-                  márgenes, tamaños de celda y tipografías para garantizar que la ficha y su
-                  solucionario quepan con total nitidez en una página estándar.
-                </div>
+              {/* Print Specs Callout */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Printer size={13} className="text-slate-400" />
+                  Salida vectorial optimizada para fotocopias en A4
+                </span>
+                <span className="text-[10px] font-mono text-slate-400 font-semibold">
+                  300 DPI
+                </span>
               </div>
             </div>
 
-            {/* Tarjeta 2: Panel Dinámico de Contenido según Tipo de Entrada */}
+            {/* Card 2: Dynamic Content Editor */}
 
-            {/* A) Para actividades basadas en palabras (Sopa, Crucigrama, Anagramas, Relacionar) */}
+            {/* A) Word-based (WordSearch, Crossword, Scramble, Matching) */}
             {["wordsearch", "crossword", "scramble", "matching"].includes(type) && (
-              <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-6 sm:p-7 space-y-5">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-base font-bold text-stone-900 font-heading">
-                      Palabras del Ejercicio
-                    </h2>
-                    <span className="bg-orange-100 text-orange-800 text-xs px-2.5 py-0.5 rounded-full font-bold">
-                      {validWordsCount} {validWordsCount === 1 ? "palabra" : "palabras"}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                      Lista de Palabras
+                    </h3>
+                    <span className="text-[11px] font-mono font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                      {validWordsCount}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={clearItems}
-                      title="Vaciar lista"
-                      className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                      title="Reiniciar lista"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                     >
-                      <RotateCcw size={15} />
+                      <RotateCcw size={14} />
                     </button>
                     <button
                       type="button"
                       onClick={addItem}
-                      className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
+                      className="flex items-center gap-1 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow-2xs cursor-pointer"
                     >
-                      <Plus size={15} />
-                      Añadir Fila
+                      <Plus size={13} />
+                      Añadir
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
                   {items.map((item, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 bg-stone-50/70 rounded-2xl border border-stone-200/80 hover:border-orange-200 hover:bg-white transition-all flex items-start gap-3 group"
+                      className="p-2.5 bg-slate-50/70 rounded-xl border border-slate-200/90 hover:border-slate-300 hover:bg-white transition-all flex items-start gap-2.5 group"
                     >
-                      <span className="w-6 h-6 rounded-lg bg-stone-200/80 group-hover:bg-orange-100 group-hover:text-orange-700 flex items-center justify-center text-[11px] font-bold text-stone-600 shrink-0 mt-1 font-mono">
+                      <span className="w-5 h-5 rounded bg-slate-200/80 text-slate-600 flex items-center justify-center text-[10px] font-mono font-bold shrink-0 mt-1.5">
                         {(idx + 1).toString().padStart(2, "0")}
                       </span>
 
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-1.5">
                         <input
                           type="text"
                           value={item.word}
                           onChange={(e) => updateItem(idx, "word", e.target.value)}
-                          placeholder="PALABRA (EJ: PLANETA)"
-                          className="w-full bg-white px-3.5 py-2 rounded-xl border border-stone-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none uppercase font-mono text-xs font-bold tracking-wider text-stone-900 shadow-2xs"
+                          placeholder="PALABRA"
+                          className="w-full bg-white px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none uppercase font-mono text-xs font-bold tracking-wide text-slate-900 shadow-2xs"
                         />
                         {["crossword", "matching", "scramble"].includes(type) && (
                           <input
@@ -598,7 +587,7 @@ export default function Home() {
                             value={item.clue}
                             onChange={(e) => updateItem(idx, "clue", e.target.value)}
                             placeholder="Pista o definición..."
-                            className="w-full bg-white px-3.5 py-1.5 rounded-xl border border-stone-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-xs text-stone-700 shadow-2xs"
+                            className="w-full bg-white px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs text-slate-700 shadow-2xs"
                           />
                         )}
                       </div>
@@ -608,9 +597,9 @@ export default function Home() {
                         onClick={() => removeItem(idx)}
                         disabled={items.length === 1}
                         title="Eliminar palabra"
-                        className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 disabled:hover:text-stone-400 disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer mt-0.5"
+                        className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-20 disabled:hover:text-slate-300 disabled:hover:bg-transparent rounded-lg transition-colors cursor-pointer mt-1"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -619,34 +608,34 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="w-full py-3 border-2 border-dashed border-stone-300 hover:border-orange-400 hover:bg-orange-50/50 text-stone-500 hover:text-orange-700 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full py-2.5 border border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
                 >
-                  <Plus size={16} />
-                  Agregar otra palabra a la lista
+                  <Plus size={14} />
+                  Añadir otra palabra
                 </button>
               </div>
             )}
 
-            {/* B) Para Criptograma */}
+            {/* B) Cryptogram Editor */}
             {type === "cryptogram" && (
-              <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-6 sm:p-7 space-y-4">
-                <h3 className="text-base font-bold text-stone-900 font-heading">
-                  Frase Secreta a Descifrar
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3.5">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                  Frase Secreta a Cifrar
                 </h3>
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">
-                    Mensaje Oculto
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Texto Oculto
                   </label>
                   <textarea
                     rows={3}
                     value={cryptoPhrase}
                     onChange={(e) => setCryptoPhrase(e.target.value)}
                     placeholder="Escribe la frase que los alumnos deberán descifrar..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none text-xs uppercase font-mono font-semibold"
+                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs uppercase font-mono font-bold text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Pista o Temática (Opcional)
                   </label>
                   <input
@@ -654,49 +643,47 @@ export default function Home() {
                     value={cryptoHint}
                     onChange={(e) => setCryptoHint(e.target.value)}
                     placeholder="Ej: Curiosidades del espacio"
-                    className="w-full px-4 py-2 rounded-xl border border-stone-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none text-xs"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs text-slate-800"
                   />
                 </div>
               </div>
             )}
 
-            {/* C) Para Texto con Huecos (Cloze) */}
+            {/* C) Cloze Test Editor */}
             {type === "cloze" && (
-              <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-6 sm:p-7 space-y-4">
-                <h3 className="text-base font-bold text-stone-900 font-heading">
-                  Párrafo del Ejercicio
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3.5">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                  Texto del Ejercicio
                 </h3>
-                <p className="text-xs text-stone-500">
-                  Consejo: Coloca entre corchetes <code>[palabra]</code> las palabras que
-                  desees ocultar para el banco de opciones, o escribe texto normal para
-                  ocultación automática.
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Coloca entre corchetes <code>[palabra]</code> los términos que quieras ocultar
+                  para el banco de opciones, o escribe normalmente para selección automática.
                 </p>
                 <textarea
                   rows={6}
                   value={clozeText}
                   onChange={(e) => setClozeText(e.target.value)}
-                  className="w-full p-4 rounded-xl border border-stone-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none text-xs leading-relaxed"
+                  className="w-full p-3.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs leading-relaxed text-slate-800 font-sans"
                 />
               </div>
             )}
 
-            {/* D) Para Rosco Pasapalabra */}
+            {/* D) Rosco Editor */}
             {type === "rosco" && (
-              <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-6 sm:p-7 space-y-4">
-                <h3 className="text-base font-bold text-stone-900 font-heading">
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3">
+                <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
                   Rueda de Palabras (A - Z)
                 </h3>
-                <p className="text-xs text-stone-500">
-                  El Rosco incluye por defecto las 25 definiciones temáticas del abecedario
-                  escolar completo. Puedes regenerar o imprimir directamente la ficha y su
-                  solución.
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Incluye las 25 definiciones escolares calibradas de la A a la Z. Puedes
+                  descargar directamente el pliego de preguntas y su solucionario.
                 </p>
               </div>
             )}
           </div>
 
-          {/* Columna Derecha: Vista Previa y Descarga de PDF (7 columnas) */}
-          <div className="lg:col-span-7 sticky top-24">
+          {/* Right Column: Physical Paper Canvas & PDF Export (7 columns) */}
+          <div className="lg:col-span-7 sticky top-20">
             <ActivityPreview
               type={type}
               title={title}
