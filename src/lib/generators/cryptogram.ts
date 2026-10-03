@@ -1,7 +1,10 @@
+import { shuffle } from "../random";
 import { CryptogramResult, CryptogramChar, Difficulty } from "../types/activities";
 
 function normalizeChar(c: string): string {
-  return c
+  const upper = c.toUpperCase();
+  if (upper === "Ñ") return "Ñ";
+  return upper
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase();
@@ -26,15 +29,15 @@ export function generateCryptogram(
   const uniqueLetters = new Set<string>();
   for (const rawChar of cleanPhrase) {
     const c = normalizeChar(rawChar);
-    if (/[A-Z]/.test(c)) {
+    if (/[A-ZÑ]/.test(c)) {
       uniqueLetters.add(c);
     }
   }
 
   const lettersArr = Array.from(uniqueLetters);
   
-  // Create randomized numbers 1..26
-  const numbers: number[] = Array.from({ length: 26 }, (_, i) => i + 1);
+  // Create randomized numbers 1..27
+  const numbers: number[] = Array.from({ length: 27 }, (_, i) => i + 1);
   for (let i = numbers.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
@@ -53,7 +56,7 @@ export function generateCryptogram(
       ? Math.max(1, Math.floor(lettersArr.length * 0.15))
       : 0;
 
-  const shuffledLetters = [...lettersArr].sort(() => Math.random() - 0.5);
+  const shuffledLetters = shuffle(lettersArr);
   const preRevealed = new Set<string>(shuffledLetters.slice(0, revealCount));
 
   // Split phrase into words
@@ -61,7 +64,7 @@ export function generateCryptogram(
   const words: CryptogramChar[][] = rawWords.map((word) => {
     return word.split("").map((rawChar) => {
       const c = normalizeChar(rawChar);
-      const isLetter = /[A-Z]/.test(c);
+      const isLetter = /[A-ZÑ]/.test(c);
       const code = isLetter ? letterToCode[c] ?? 0 : rawChar;
       const isRevealed = isLetter ? preRevealed.has(c) : true;
 
@@ -76,7 +79,7 @@ export function generateCryptogram(
 
   // Cipher key table (sorted alphabetically)
   const cipherKey = lettersArr
-    .sort()
+    .sort((a, b) => a.localeCompare(b, "es"))
     .map((letter) => ({
       letter,
       code: letterToCode[letter],

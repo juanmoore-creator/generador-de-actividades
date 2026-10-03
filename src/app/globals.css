@@ -1,72 +1,191 @@
 @import "tailwindcss";
 
+/* Modo oscuro por clase (.dark en <html>), controlado por el selector de tema. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-heading: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/*
+ * Tokens semánticos. Los componentes de la app usan estos nombres
+ * (bg-surface, text-ink-2, border-line…) para funcionar en claro y oscuro.
+ * La hoja de la vista previa es siempre papel blanco y usa colores fijos.
+ */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-on-primary: var(--c-on-primary);
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-danger-ink: var(--c-danger-ink);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-warn-ink: var(--c-warn-ink);
+  --color-ok: var(--c-ok);
+  --color-ok-soft: var(--c-ok-soft);
+  --color-ok-ink: var(--c-ok-ink);
+}
+
 :root {
-  --font-heading: var(--font-outfit);
-  --font-sans: var(--font-jakarta);
-  --font-mono: var(--font-space-mono);
+  --c-bg: #f5f6f8;
+  --c-surface: #ffffff;
+  --c-surface-2: #f1f5f9;
+  --c-surface-3: #e2e8f0;
+  --c-ink: #0f172a;
+  --c-ink-2: #334155;
+  --c-ink-3: #5b6b82;
+  --c-line: #e2e8f0;
+  --c-line-strong: #cbd5e1;
+  --c-primary: #0f172a;
+  --c-primary-hover: #1e293b;
+  --c-on-primary: #ffffff;
+  --c-accent: #2563eb;
+  --c-accent-soft: #eff6ff;
+  --c-accent-ink: #1d4ed8;
+  --c-danger: #dc2626;
+  --c-danger-soft: #fef2f2;
+  --c-danger-ink: #b91c1c;
+  --c-warn-soft: #fffbeb;
+  --c-warn-ink: #92400e;
+  --c-ok: #059669;
+  --c-ok-soft: #ecfdf5;
+  --c-ok-ink: #047857;
+  color-scheme: light;
+}
+
+.dark {
+  --c-bg: #0b1120;
+  --c-surface: #121a2b;
+  --c-surface-2: #1a2438;
+  --c-surface-3: #26324a;
+  --c-ink: #f1f5f9;
+  --c-ink-2: #cbd5e1;
+  --c-ink-3: #9aa8bd;
+  --c-line: #243049;
+  --c-line-strong: #34425e;
+  --c-primary: #f1f5f9;
+  --c-primary-hover: #dbe3ee;
+  --c-on-primary: #0f172a;
+  --c-accent: #60a5fa;
+  --c-accent-soft: rgba(59, 130, 246, 0.16);
+  --c-accent-ink: #93c5fd;
+  --c-danger: #f87171;
+  --c-danger-soft: rgba(220, 38, 38, 0.16);
+  --c-danger-ink: #fca5a5;
+  --c-warn-soft: rgba(217, 119, 6, 0.16);
+  --c-warn-ink: #fcd34d;
+  --c-ok: #34d399;
+  --c-ok-soft: rgba(5, 150, 105, 0.16);
+  --c-ok-ink: #6ee7b7;
+  color-scheme: dark;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background-color: #F8F9FA;
-  color: #0F172A;
+  background-color: var(--c-bg);
+  color: var(--c-ink);
   font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6, .font-heading {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
   font-family: var(--font-heading), var(--font-sans), system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
-/* Subtle architectural dot grid for workbench canvas */
+/* Foco visible y consistente para navegación con teclado. */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Fondo punteado de la mesa de trabajo. */
 .canvas-grid {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+  background-image: radial-gradient(color-mix(in srgb, var(--c-ink-3) 30%, transparent) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-/* Authentic physical paper elevation */
+/* Hoja de papel de la vista previa (siempre blanca). */
 .paper-sheet {
-  background: #FFFFFF;
-  box-shadow: 
-    0 1px 2px 0 rgba(15, 23, 42, 0.04),
-    0 12px 24px -4px rgba(15, 23, 42, 0.06),
-    0 24px 48px -12px rgba(15, 23, 42, 0.04);
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow:
+    0 1px 2px 0 rgba(15, 23, 42, 0.06),
+    0 12px 24px -4px rgba(15, 23, 42, 0.08),
+    0 24px 48px -12px rgba(15, 23, 42, 0.06);
 }
 
-/* Registration crosshair marks on simulated print sheet */
-.registration-mark {
-  position: relative;
-}
-.registration-mark::before,
-.registration-mark::after {
-  content: "";
-  position: absolute;
-  background-color: #CBD5E1;
+/* Diálogos nativos */
+dialog::backdrop {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
 }
 
-/* Custom minimal scrollbar */
+dialog[open] {
+  animation: dialog-in 160ms ease-out;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--c-line-strong);
   border-radius: 9999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

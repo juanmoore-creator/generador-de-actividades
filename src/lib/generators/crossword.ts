@@ -15,6 +15,8 @@ export interface CrosswordResult {
   words: CrosswordWord[];
   width: number;
   height: number;
+  /** Palabras que no se pudieron cruzar con ninguna otra y quedaron sueltas. */
+  disconnectedWords: string[];
 }
 
 export function generateCrossword(items: { word: string; clue: string }[]): CrosswordResult {
@@ -27,11 +29,17 @@ export function generateCrossword(items: { word: string; clue: string }[]): Cros
     .filter((item) => item.word.length >= 2);
 
   if (cleanItems.length === 0) {
-    return { grid: [], words: [], width: 0, height: 0 };
+    return { grid: [], words: [], width: 0, height: 0, disconnectedWords: [] };
   }
 
-  // Ordenar por longitud descendente
+  // La palabra más larga va primero; el resto en orden aleatorio (con preferencia
+  // por las largas) para que "Regenerar" produzca crucigramas distintos.
+  const sortKey = new Map(cleanItems.map((it) => [it, it.word.length + Math.random() * 4]));
   cleanItems.sort((a, b) => b.word.length - a.word.length);
+  const [longest, ...rest] = cleanItems;
+  rest.sort((a, b) => sortKey.get(b)! - sortKey.get(a)!);
+  cleanItems.splice(0, cleanItems.length, longest, ...rest);
+  const disconnectedWords: string[] = [];
 
   const placedWords: CrosswordWord[] = [];
   const gridMap = new Map<string, string>(); // "y,x" -> char
@@ -104,7 +112,7 @@ export function generateCrossword(items: { word: string; clue: string }[]): Cros
             const startX = isH ? placed.x - cIdx : placed.x + pIdx;
 
             if (isValidPlacement(item.word, startY, startX, isH)) {
-              const score = Math.abs(startY) + Math.abs(startX);
+              const score = Math.abs(startY) + Math.abs(startX) + Math.random() * 3;
               if (!bestPlacement || score < bestPlacement.score) {
                 bestPlacement = { y: startY, x: startX, isH, score };
               }
@@ -129,7 +137,8 @@ export function generateCrossword(items: { word: string; clue: string }[]): Cros
         number: 0,
       });
     } else {
-      // Fallback: ubicar abajo
+      // Fallback: ubicar abajo, sin cruces
+      disconnectedWords.push(item.original);
       let maxY = 0;
       for (const p of placedWords) {
         maxY = Math.max(maxY, p.direction === "V" ? p.y + p.word.length : p.y);
@@ -191,5 +200,5 @@ export function generateCrossword(items: { word: string; clue: string }[]): Cros
     finalGrid[w.y][w.x].number = w.number;
   }
 
-  return { grid: finalGrid, words: placedWords, width, height };
+  return { grid: finalGrid, words: placedWords, width, height, disconnectedWords };
 }

@@ -1,4 +1,7 @@
-export type Difficulty = "easy" | "medium" | "hard";
+import type { Difficulty } from "../types/activities";
+
+export const WORDSEARCH_MIN_SIZE = 8;
+export const WORDSEARCH_MAX_SIZE = 22;
 
 type Direction = [number, number]; // [dy, dx]
 
@@ -51,7 +54,21 @@ export function sanitizeSpanishWord(word: string): string {
     .replace(/[^A-ZÑ]/g, "");
 }
 
-export function generateWordSearch(words: string[], difficulty: Difficulty = "easy"): WordSearchResult {
+/** Tamaño automático de la cuadrícula según cantidad y largo de las palabras. */
+export function autoWordSearchSize(words: string[]): number {
+  const clean = words.map(sanitizeSpanishWord).filter((w) => w.length >= 2);
+  if (clean.length === 0) return 10;
+  const maxLen = Math.max(...clean.map((w) => w.length));
+  const totalChars = clean.reduce((acc, w) => acc + w.length, 0);
+  const size = Math.max(10, maxLen + 2, Math.ceil(Math.sqrt(totalChars * 2.2)));
+  return Math.min(size, WORDSEARCH_MAX_SIZE);
+}
+
+export function generateWordSearch(
+  words: string[],
+  difficulty: Difficulty = "easy",
+  forcedSize: number | null = null
+): WordSearchResult {
   const validItems = words
     .map((w) => ({ original: w.trim(), clean: sanitizeSpanishWord(w) }))
     .filter((item) => item.clean.length >= 2);
@@ -60,21 +77,18 @@ export function generateWordSearch(words: string[], difficulty: Difficulty = "ea
     return { grid: [], placedWords: [], unplacedWords: [], size: 0 };
   }
 
-  const maxLen = Math.max(...validItems.map((w) => w.clean.length));
-  const totalChars = validItems.reduce((acc, w) => acc + w.clean.length, 0);
-
   let dirs = DIRS_EASY;
   if (difficulty === "medium") dirs = DIRS_MEDIUM;
   if (difficulty === "hard") dirs = DIRS_HARD;
 
-  // Intentamos generar con tamaño inicial
-  let size = Math.max(10, maxLen + 2, Math.ceil(Math.sqrt(totalChars * 2.2)));
-  size = Math.min(size, 22); // Para que se imprima legible en A4
+  const size = forcedSize
+    ? Math.min(WORDSEARCH_MAX_SIZE, Math.max(WORDSEARCH_MIN_SIZE, Math.round(forcedSize)))
+    : autoWordSearchSize(words);
 
   let bestResult: WordSearchResult = { grid: [], placedWords: [], unplacedWords: [], size };
 
   // Ejecutamos varios intentos para colocar la mayor cantidad de palabras
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < 25; attempt++) {
     const grid: string[][] = Array.from({ length: size }, () => Array(size).fill(""));
     const placedWords: WordPlacement[] = [];
     const unplacedWords: string[] = [];
@@ -110,7 +124,7 @@ export function generateWordSearch(words: string[], difficulty: Difficulty = "ea
     for (const item of sorted) {
       let placed = false;
       let tries = 0;
-      while (!placed && tries < 150) {
+      while (!placed && tries < 300) {
         const dir = dirs[Math.floor(Math.random() * dirs.length)];
         const startY = Math.floor(Math.random() * size);
         const startX = Math.floor(Math.random() * size);
@@ -138,7 +152,8 @@ export function generateWordSearch(words: string[], difficulty: Difficulty = "ea
   }
 
   // Rellenar espacios vacíos con letras aleatorias
-  const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+  // La Ñ sólo aparece como relleno si alguna palabra la usa (p. ej. no en una sopa en inglés).
+  const letters = validItems.some((w) => w.clean.includes("Ñ")) ? "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ" : "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   for (let y = 0; y < bestResult.size; y++) {
     for (let x = 0; x < bestResult.size; x++) {
       if (!bestResult.grid[y] || bestResult.grid[y][x] === "") {

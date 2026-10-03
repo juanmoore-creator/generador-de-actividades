@@ -3,144 +3,160 @@ import { PixelArtResult } from "../types/activities";
 export interface PixelArtTemplate {
   id: string;
   name: string;
-  rows: number;
-  cols: number;
+  emoji: string;
   colorMap: Record<string, string>;
   colorNames: Record<string, string>;
-  grid: string[]; // Array of strings, each string length = cols
+  /** Una cadena por fila; "." = casillero sin pintar. Todas las filas tienen el mismo largo. */
+  grid: string[];
 }
+
+export const COLUMN_LETTERS = "ABCDEFGHIJKLMNOP";
 
 export const PIXEL_TEMPLATES: Record<string, PixelArtTemplate> = {
   corazon: {
     id: "corazon",
-    name: "Corazón Brillante",
-    rows: 10,
-    cols: 10,
-    colorMap: {
-      R: "#ef4444", // Red
-      P: "#f472b6", // Pink
-      W: "#ffffff", // White
-      Y: "#f59e0b", // Yellow
-    },
-    colorNames: {
-      R: "Rojo",
-      P: "Rosa",
-      W: "Blanco",
-      Y: "Amarillo",
-    },
+    name: "Corazón",
+    emoji: "❤️",
+    colorMap: { R: "#ef4444", P: "#f9a8d4" },
+    colorNames: { R: "Rojo", P: "Rosa" },
     grid: [
       "..........",
-      "..RR..RR..",
-      ".RPPRRPPR.",
-      ".RPPRRPPR.",
+      ".RR....RR.",
+      "RPRR..RRRR",
+      "RPRRRRRRRR",
+      "RRRRRRRRRR",
       ".RRRRRRRR.",
       "..RRRRRR..",
       "...RRRR...",
       "....RR....",
-      ".....Y....",
       "..........",
     ],
   },
   estrella: {
     id: "estrella",
-    name: "Estrella Mágica",
-    rows: 10,
-    cols: 10,
-    colorMap: {
-      Y: "#eab308", // Yellow
-      O: "#f97316", // Orange
-      B: "#3b82f6", // Blue
-    },
-    colorNames: {
-      Y: "Amarillo",
-      O: "Naranja",
-      B: "Azul Cielo",
-    },
+    name: "Estrella",
+    emoji: "⭐",
+    colorMap: { Y: "#facc15", O: "#f97316" },
+    colorNames: { Y: "Amarillo", O: "Naranja" },
     grid: [
       "....YY....",
       "....YY....",
-      "..YYYYYY..",
+      "...YOOY...",
+      "YYYYOOYYYY",
       ".YYYYYYYY.",
       "..YYYYYY..",
-      "..YYOOYY..",
+      "..YYYYYY..",
+      ".YYY..YYY.",
       ".YY....YY.",
-      "YY......YY",
-      "..........",
-      "....BB....",
+      "Y........Y",
     ],
   },
   arbol: {
     id: "arbol",
-    name: "Árbol y Manzanas",
-    rows: 10,
-    cols: 10,
-    colorMap: {
-      G: "#22c55e", // Green
-      R: "#ef4444", // Red
-      M: "#78350f", // Brown
-      S: "#38bdf8", // Sky
-    },
-    colorNames: {
-      G: "Verde Hoja",
-      R: "Rojo Manzana",
-      M: "Marrón Tronco",
-      S: "Celeste",
-    },
+    name: "Árbol",
+    emoji: "🌳",
+    colorMap: { G: "#22c55e", R: "#dc2626", M: "#92400e" },
+    colorNames: { G: "Verde", R: "Rojo", M: "Marrón" },
     grid: [
       "...GGGG...",
-      "..GGRGG...",
-      ".GGGGGRGG.",
+      "..GGRGGG..",
+      ".GGGGGGRG.",
       ".GRGGGGGG.",
+      ".GGGGRGGG.",
       "..GGGGGG..",
-      "...GGRG...",
+      "...GGGG...",
       "....MM....",
       "....MM....",
       "....MM....",
+      "...MMMM...",
+      "GGGGGGGGGG",
+    ],
+  },
+  casa: {
+    id: "casa",
+    name: "Casa",
+    emoji: "🏠",
+    colorMap: { R: "#dc2626", Y: "#fde047", B: "#38bdf8", M: "#92400e" },
+    colorNames: { R: "Rojo", Y: "Amarillo", B: "Celeste", M: "Marrón" },
+    grid: [
+      "....RR....",
+      "...RRRR...",
+      "..RRRRRR..",
+      ".RRRRRRRR.",
+      "RRRRRRRRRR",
+      ".YYYYYYYY.",
+      ".YBBYYBBY.",
+      ".YBBYYBBY.",
+      ".YYYMMYYY.",
+      ".YYYMMYYY.",
+    ],
+  },
+  pez: {
+    id: "pez",
+    name: "Pez",
+    emoji: "🐟",
+    colorMap: { O: "#fb923c", B: "#2563eb", K: "#111827" },
+    colorNames: { O: "Naranja", B: "Azul", K: "Negro" },
+    grid: [
+      "............",
+      "....OOOO....",
+      "..OOOOOOO..B",
+      ".OKOOOOOOOBB",
+      ".OOOOOOOOOBB",
+      "..OOOOOOO..B",
+      "....OOOO....",
+      "............",
+    ],
+  },
+  gato: {
+    id: "gato",
+    name: "Gato",
+    emoji: "🐱",
+    colorMap: { G: "#9ca3af", K: "#111827", P: "#f472b6" },
+    colorNames: { G: "Gris", K: "Negro", P: "Rosa" },
+    grid: [
+      ".G......G.",
+      ".GG....GG.",
       ".GGGGGGGG.",
+      ".GKGGGGKG.",
+      ".GGGGGGGG.",
+      ".GGGPPGGG.",
+      "..GGGGGG..",
+      "..GGGGGG..",
+      ".GGGGGGGG.",
+      ".GG.GG.GG.",
     ],
   },
 };
 
 export function generateCoordinatePixelArt(templateKey = "corazon"): PixelArtResult {
   const template = PIXEL_TEMPLATES[templateKey] || PIXEL_TEMPLATES.corazon;
-  const colLetters = "ABCDEFGHIJKLMN";
+  const rows = template.grid.length;
+  const cols = Math.max(...template.grid.map((r) => r.length));
 
   const colorCoords: Record<string, string[]> = {};
-  const matrix: (string | null)[][] = [];
-
-  for (let r = 0; r < template.rows; r++) {
-    const rowStr = template.grid[r] || ".".repeat(template.cols);
-    const rowArr: (string | null)[] = [];
-
-    for (let c = 0; c < template.cols; c++) {
+  const grid: (string | null)[][] = template.grid.map((rowStr, r) =>
+    Array.from({ length: cols }, (_, c) => {
       const char = rowStr[c];
-      if (char && char !== ".") {
-        rowArr.push(char);
-        const coord = `${colLetters[c]}${r + 1}`;
-        if (!colorCoords[char]) {
-          colorCoords[char] = [];
-        }
-        colorCoords[char].push(coord);
-      } else {
-        rowArr.push(null);
-      }
-    }
-    matrix.push(rowArr);
-  }
+      if (!char || char === ".") return null;
+      (colorCoords[char] ??= []).push(`${COLUMN_LETTERS[c]}${r + 1}`);
+      return char;
+    })
+  );
 
-  const instructions = Object.entries(colorCoords).map(([code, coords]) => ({
+  const instructions = Object.entries(colorCoords).map(([code, coordinates]) => ({
     colorCode: code,
     colorName: template.colorNames[code] || code,
     hex: template.colorMap[code] || "#000000",
-    coordinates: coords,
+    coordinates,
   }));
 
   return {
-    rows: template.rows,
-    cols: template.cols,
+    rows,
+    cols,
     colorMap: template.colorMap,
     colorNames: template.colorNames,
     instructions,
-    grid: matrix,
+    grid,
   };
 }
