@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { WordItem } from "@/lib/types/activities";
-import { X, FileUp, Sparkles, Check, AlertCircle } from "lucide-react";
+import { X, FileUp, Sparkles } from "lucide-react";
 
 interface Props {
   isOpen: boolean;

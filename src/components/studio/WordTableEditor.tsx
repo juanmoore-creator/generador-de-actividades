@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { WordItem } from "@/lib/types/activities";
-import { Plus, Trash2, RotateCcw, FileUp, Sparkles } from "lucide-react";
+import { Plus, Trash2, RotateCcw, FileUp } from "lucide-react";
 import { BulkImportModal } from "./BulkImportModal";
 
 interface Props {

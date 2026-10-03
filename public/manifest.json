@@ -1,0 +1,55 @@
+{
+  "name": "GenAct · Generador de Actividades Educativas",
+  "short_name": "GenAct",
+  "description": "Crea, comparte e imprime actividades educativas y crucigramas en PDF para tus alumnos.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FA",
+  "theme_color": "#0F172A",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Crear Actividad",
+      "short_name": "Crear",
+      "description": "Abrir el estudio para crear una nueva ficha",
+      "url": "/?tab=studio",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mis Fichas Guardadas",
+      "short_name": "Mis Fichas",
+      "description": "Ver tus actividades guardadas",
+      "url": "/?tab=saved",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Biblioteca Pública",
+      "short_name": "Comunidad",
+      "description": "Explorar fichas compartidas por otros profesores",
+      "url": "/?tab=community",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

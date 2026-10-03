@@ -31,9 +31,11 @@ export const StudioHeader = ({
   const presetsRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const [prevTitle, setPrevTitle] = useState(title);
+  if (prevTitle !== title) {
+    setPrevTitle(title);
     setTempTitle(title);
-  }, [title]);
+  }
 
   useEffect(() => {
     if (isEditing) {

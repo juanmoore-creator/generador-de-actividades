@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { WordSearchResult } from "@/lib/generators/wordSearch";
 import { CrosswordResult } from "@/lib/generators/crossword";
 import {
@@ -69,6 +69,25 @@ export const ActivityPreview = ({
   const [zoom, setZoom] = useState<number>(0.85);
   const [downloading, setDownloading] = useState<"activity" | "solution" | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined") {
+        if (window.innerWidth < 420) {
+          setZoom(0.55);
+        } else if (window.innerWidth < 640) {
+          setZoom(0.65);
+        } else if (window.innerWidth < 1024) {
+          setZoom(0.75);
+        } else {
+          setZoom(0.85);
+        }
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleDownload = async (isSolution: boolean) => {
     const target = isSolution ? "solution" : "activity";
@@ -206,7 +225,10 @@ export const ActivityPreview = ({
   };
 
   const downloadHandlerRef = React.useRef(handleDownload);
-  downloadHandlerRef.current = handleDownload;
+
+  React.useEffect(() => {
+    downloadHandlerRef.current = handleDownload;
+  });
 
   React.useEffect(() => {
     if (onTriggerDownload) {
@@ -250,30 +272,56 @@ export const ActivityPreview = ({
           </div>
         </div>
 
-        {/* Tactile Mode Switcher */}
-        <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/70 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setShowSolution(false)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
-              !showSolution
-                ? "bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Ficha Alumno
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSolution(true)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] flex items-center gap-1.5 ${
-              showSolution
-                ? "bg-slate-900 text-white shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Solucionario
-          </button>
+        {/* Zoom & Mode Switcher */}
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+          {/* Zoom controls */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/70 text-slate-600">
+            <button
+              type="button"
+              onClick={() => setZoom((z) => Math.max(0.35, Number((z - 0.1).toFixed(2))))}
+              className="p-1.5 hover:text-slate-900 rounded-lg hover:bg-white transition-colors cursor-pointer"
+              title="Reducir zoom"
+            >
+              <ZoomOut size={13} />
+            </button>
+            <span className="px-1 text-[10px] sm:text-xs font-mono font-bold text-slate-700 min-w-8 sm:min-w-9 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoom((z) => Math.min(1.3, Number((z + 0.1).toFixed(2))))}
+              className="p-1.5 hover:text-slate-900 rounded-lg hover:bg-white transition-colors cursor-pointer"
+              title="Aumentar zoom"
+            >
+              <ZoomIn size={13} />
+            </button>
+          </div>
+
+          {/* Tactile Mode Switcher */}
+          <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/70">
+            <button
+              type="button"
+              onClick={() => setShowSolution(false)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+                !showSolution
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Ficha Alumno
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSolution(true)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] flex items-center gap-1.5 ${
+                showSolution
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Solucionario
+            </button>
+          </div>
         </div>
       </div>
 
