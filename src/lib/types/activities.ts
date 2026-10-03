@@ -21,6 +21,14 @@ export interface WordItem {
 
 export type Difficulty = "easy" | "medium" | "hard";
 
+export interface SheetHeaderOptions {
+  showName: boolean;
+  showDate: boolean;
+  showGrade: boolean;
+  showScore: boolean;
+  schoolName?: string;
+}
+
 // 1. Scramble
 export interface ScrambledWord {
   original: string;

@@ -15,6 +15,7 @@ import {
   CrossMathResult,
   MazeResult,
   PixelArtResult,
+  SheetHeaderOptions,
 } from "@/lib/types/activities";
 import {
   Printer,
@@ -23,6 +24,8 @@ import {
   Loader2,
   CheckCircle2,
   FileText,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 
 interface Props {
@@ -40,6 +43,8 @@ interface Props {
   crossMathResult: CrossMathResult | null;
   mazeResult: MazeResult | null;
   pixelArtResult: PixelArtResult | null;
+  headerOptions?: SheetHeaderOptions;
+  onTriggerDownload?: (handler: (isSolution: boolean) => Promise<void>) => void;
 }
 
 export const ActivityPreview = ({
@@ -57,8 +62,11 @@ export const ActivityPreview = ({
   crossMathResult,
   mazeResult,
   pixelArtResult,
+  headerOptions,
+  onTriggerDownload,
 }: Props) => {
   const [showSolution, setShowSolution] = useState(false);
+  const [zoom, setZoom] = useState<number>(0.85);
   const [downloading, setDownloading] = useState<"activity" | "solution" | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -197,6 +205,15 @@ export const ActivityPreview = ({
     }
   };
 
+  const downloadHandlerRef = React.useRef(handleDownload);
+  downloadHandlerRef.current = handleDownload;
+
+  React.useEffect(() => {
+    if (onTriggerDownload) {
+      onTriggerDownload((isSolution: boolean) => downloadHandlerRef.current(isSolution));
+    }
+  }, [onTriggerDownload]);
+
   const hasData = Boolean(
     (type === "wordsearch" && wordSearchResult && wordSearchResult.grid.length > 0) ||
     (type === "crossword" && crosswordResult && crosswordResult.words.length > 0) ||
@@ -268,7 +285,7 @@ export const ActivityPreview = ({
       )}
 
       {/* Workbench Paper Canvas */}
-      <div className="p-4 sm:p-7 rounded-2xl bg-slate-100/70 border border-slate-200/80 canvas-grid flex justify-center">
+      <div className="p-4 sm:p-7 rounded-2xl bg-slate-100/70 border border-slate-200/80 canvas-grid flex justify-center overflow-hidden">
         {!hasData ? (
           <div className="paper-sheet rounded-xl p-12 w-full max-w-lg min-h-[460px] flex flex-col items-center justify-center text-center text-slate-400 border border-slate-200/60">
             <FileText size={36} className="stroke-[1.3] text-slate-300 mb-3" />
@@ -279,23 +296,43 @@ export const ActivityPreview = ({
           </div>
         ) : (
           /* Simulated Physical A4 Sheet */
-          <div className="paper-sheet rounded-xl border border-slate-200/90 w-full max-w-xl p-7 sm:p-9 relative overflow-hidden transition-all duration-200">
+          <div
+            className="paper-sheet rounded-xl border border-slate-200/90 w-full max-w-xl p-7 sm:p-9 relative overflow-hidden transition-all duration-200"
+            style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
+          >
             {/* Corner registration marks */}
             <div className="absolute top-2 left-2 w-3 h-3 border-t border-l border-slate-300 pointer-events-none" />
             <div className="absolute top-2 right-2 w-3 h-3 border-t border-r border-slate-300 pointer-events-none" />
             <div className="absolute bottom-2 left-2 w-3 h-2 border-b border-l border-slate-300 pointer-events-none" />
             <div className="absolute bottom-2 right-2 w-3 h-2 border-b border-r border-slate-300 pointer-events-none" />
 
-            {/* Simulated Paper Header */}
+            {/* Simulated Paper Header with Dynamic Customization */}
             <div className="border-b border-slate-200 pb-4 mb-6">
+              {headerOptions?.schoolName && (
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center mb-1.5 font-mono">
+                  {headerOptions.schoolName}
+                </p>
+              )}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-heading tracking-tight leading-tight">
                     {title}
                   </h2>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-3 text-xs text-slate-500 font-medium">
-                    <span>Nombre: __________________________________</span>
-                    <span>Fecha: ____________</span>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-3 text-xs text-slate-500 font-medium">
+                    {(!headerOptions || headerOptions.showName) && (
+                      <span>Nombre: __________________________________</span>
+                    )}
+                    {(!headerOptions || headerOptions.showDate) && (
+                      <span>Fecha: ____________</span>
+                    )}
+                    {headerOptions?.showGrade && (
+                      <span>Curso / Grado: _________</span>
+                    )}
+                    {headerOptions?.showScore && (
+                      <span className="font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                        Nota: _____ / 10
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -868,6 +905,59 @@ export const ActivityPreview = ({
           </div>
         )}
       </div>
+
+      {/* Canvas Zoom & Quick Options Bar */}
+      {hasData && (
+        <div className="flex items-center justify-between px-4 py-2.5 bg-white rounded-xl border border-slate-200/80 text-xs shadow-2xs">
+          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+            <span className="text-[11px] text-slate-400 mr-1 hidden sm:inline">Zoom:</span>
+            <button
+              type="button"
+              onClick={() => setZoom((z) => Math.max(0.65, Number((z - 0.1).toFixed(2))))}
+              title="Alejar (Zoom -)"
+              aria-label="Alejar vista previa"
+              className="p-1 hover:bg-slate-100 rounded text-slate-600 transition-colors cursor-pointer"
+            >
+              <ZoomOut size={14} />
+            </button>
+            <span className="w-12 text-center font-mono font-semibold text-[11px] text-slate-800">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoom((z) => Math.min(1.2, Number((z + 0.1).toFixed(2))))}
+              title="Acercar (Zoom +)"
+              aria-label="Acercar vista previa"
+              className="p-1 hover:bg-slate-100 rounded text-slate-600 transition-colors cursor-pointer"
+            >
+              <ZoomIn size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoom(0.85)}
+              className="ml-1 text-[11px] px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-700 transition-colors cursor-pointer"
+            >
+              Ajustar
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoom(1)}
+              className="text-[11px] px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-700 transition-colors cursor-pointer"
+            >
+              100%
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 transition-colors font-medium px-2.5 py-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+          >
+            <Printer size={13} className="text-slate-500" />
+            <span className="hidden sm:inline">Imprimir directo</span>
+          </button>
+        </div>
+      )}
 
       {/* Action Footer with High-End Print Buttons */}
       {hasData && (

@@ -1,19 +1,32 @@
 "use client";
 
-import { useState, useMemo, useSyncExternalStore } from "react";
+import { useState, useMemo, useSyncExternalStore, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import {
-  Plus,
-  Trash2,
-  RotateCcw,
-  Loader2,
+  SlidersHorizontal,
+  PenTool,
+  GraduationCap,
   RefreshCw,
   Printer,
-  SlidersHorizontal,
+  FileCheck2,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Sparkles,
+  Dices,
+  Info,
 } from "lucide-react";
 import { ActivityCategoryPicker } from "@/components/ActivityCategoryPicker";
+import { StudioHeader } from "@/components/studio/StudioHeader";
+import { WordTableEditor } from "@/components/studio/WordTableEditor";
+import { SheetHeaderCustomizer } from "@/components/studio/SheetHeaderCustomizer";
 import { ACTIVITIES } from "@/lib/registry";
-import { ActivityType, Difficulty, WordItem } from "@/lib/types/activities";
+import {
+  ActivityType,
+  Difficulty,
+  WordItem,
+  SheetHeaderOptions,
+} from "@/lib/types/activities";
 import { generateWordSearch } from "@/lib/generators/wordSearch";
 import { generateCrossword } from "@/lib/generators/crossword";
 import { generateWordScramble } from "@/lib/generators/wordScramble";
@@ -36,9 +49,10 @@ const ActivityPreview = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-12 flex flex-col items-center justify-center min-h-[460px] text-slate-400">
-        <Loader2 className="animate-spin text-slate-700 mb-2" size={28} />
-        <p className="text-xs font-semibold text-slate-600">Cargando mesa de trabajo...</p>
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-12 flex flex-col items-center justify-center min-h-[520px] text-slate-400">
+        <div className="w-8 h-8 rounded-full border-2 border-slate-300 border-t-slate-800 animate-spin mb-3" />
+        <p className="text-xs font-bold text-slate-700 tracking-tight">Cargando mesa de trabajo editorial...</p>
+        <p className="text-[11px] text-slate-400 mt-1">Renderizando pliego A4 de alta fidelidad</p>
       </div>
     ),
   }
@@ -93,6 +107,14 @@ const PRESETS: Record<string, { title: string; emoji: string; items: WordItem[] 
   },
 };
 
+const DEFAULT_HEADER_OPTIONS: SheetHeaderOptions = {
+  showName: true,
+  showDate: true,
+  showGrade: true,
+  showScore: false,
+  schoolName: "",
+};
+
 const emptySubscribe = () => () => {};
 
 export default function Home() {
@@ -102,10 +124,17 @@ export default function Home() {
     () => false
   );
 
+  // Active step in 3-step creation flow: 1 (Format), 2 (Content), 3 (Sheet Options)
+  const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
+
+  // Activity Configuration
   const [type, setType] = useState<ActivityType>("wordsearch");
   const [title, setTitle] = useState("Animales del Mundo");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [regenerateKey, setRegenerateKey] = useState(0);
+
+  // Sheet Header Options
+  const [headerOptions, setHeaderOptions] = useState<SheetHeaderOptions>(DEFAULT_HEADER_OPTIONS);
 
   // Word-based activities
   const [items, setItems] = useState<WordItem[]>(PRESETS.animales.items);
@@ -132,6 +161,80 @@ export default function Home() {
 
   // Pixel Art state
   const [pixelArtKey, setPixelArtKey] = useState<string>("corazon");
+
+  // PDF Export integration
+  const downloadHandlerRef = useRef<((isSolution: boolean) => Promise<void>) | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // 1. Restore from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("genact_studio_draft_v2");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.type) setType(parsed.type);
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.difficulty) setDifficulty(parsed.difficulty);
+        if (parsed.items && Array.isArray(parsed.items) && parsed.items.length > 0) {
+          setItems(parsed.items);
+        }
+        if (parsed.cryptoPhrase) setCryptoPhrase(parsed.cryptoPhrase);
+        if (parsed.cryptoHint !== undefined) setCryptoHint(parsed.cryptoHint);
+        if (parsed.clozeText) setClozeText(parsed.clozeText);
+        if (parsed.sudokuSize) setSudokuSize(parsed.sudokuSize);
+        if (parsed.sudokuEmojis !== undefined) setSudokuEmojis(parsed.sudokuEmojis);
+        if (parsed.pyramidLevels) setPyramidLevels(parsed.pyramidLevels);
+        if (parsed.pyramidCount) setPyramidCount(parsed.pyramidCount);
+        if (parsed.mazeSize) setMazeSize(parsed.mazeSize);
+        if (parsed.pixelArtKey) setPixelArtKey(parsed.pixelArtKey);
+        if (parsed.headerOptions) setHeaderOptions(parsed.headerOptions);
+      }
+    } catch (e) {
+      console.warn("Could not load draft from localStorage", e);
+    }
+  }, []);
+
+  // 2. Persist to localStorage automatically on state change
+  useEffect(() => {
+    if (!isMounted) return;
+    const draft = {
+      type,
+      title,
+      difficulty,
+      items,
+      cryptoPhrase,
+      cryptoHint,
+      clozeText,
+      sudokuSize,
+      sudokuEmojis,
+      pyramidLevels,
+      pyramidCount,
+      mazeSize,
+      pixelArtKey,
+      headerOptions,
+    };
+    try {
+      localStorage.setItem("genact_studio_draft_v2", JSON.stringify(draft));
+    } catch (e) {
+      console.warn("Failed saving draft to localStorage", e);
+    }
+  }, [
+    isMounted,
+    type,
+    title,
+    difficulty,
+    items,
+    cryptoPhrase,
+    cryptoHint,
+    clozeText,
+    sudokuSize,
+    sudokuEmojis,
+    pyramidLevels,
+    pyramidCount,
+    mazeSize,
+    pixelArtKey,
+    headerOptions,
+  ]);
 
   const handleSelectActivity = (newType: ActivityType) => {
     setType(newType);
@@ -161,10 +264,49 @@ export default function Home() {
     setItems([{ word: "", clue: "" }]);
   };
 
-  const loadPreset = (key: keyof typeof PRESETS) => {
+  const handleBulkImport = (newItems: WordItem[], mode: "replace" | "append") => {
+    if (mode === "replace") {
+      setItems(newItems);
+    } else {
+      setItems((prev) => [...prev, ...newItems]);
+    }
+  };
+
+  const loadPreset = (key: string) => {
     const preset = PRESETS[key];
-    setTitle(preset.title);
-    setItems(preset.items);
+    if (preset) {
+      setTitle(preset.title);
+      setItems(preset.items);
+    }
+  };
+
+  const handleRegisterDownload = useCallback(
+    (handler: (isSolution: boolean) => Promise<void>) => {
+      downloadHandlerRef.current = handler;
+    },
+    []
+  );
+
+  const handleDownloadActivity = async () => {
+    if (downloadHandlerRef.current) {
+      setIsExporting(true);
+      try {
+        await downloadHandlerRef.current(false);
+      } finally {
+        setIsExporting(false);
+      }
+    }
+  };
+
+  const handleDownloadSolution = async () => {
+    if (downloadHandlerRef.current) {
+      setIsExporting(true);
+      try {
+        await downloadHandlerRef.current(true);
+      } finally {
+        setIsExporting(false);
+      }
+    }
   };
 
   // Reactive generator computations
@@ -242,447 +384,516 @@ export default function Home() {
     return generateCoordinatePixelArt(pixelArtKey);
   }, [isMounted, type, pixelArtKey, regenerateKey]);
 
-  const validWordsCount = items.filter((i) => i.word.trim().length > 0).length;
+  const isWordBased = ["wordsearch", "crossword", "scramble", "matching"].includes(type);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-24">
-      {/* Studio Header */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Monogram */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-xs font-mono">
-              GA
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold tracking-tight text-slate-950 font-heading">
-                  GenAct
-                </span>
-                <span className="text-[10px] font-semibold text-slate-500 font-mono border-l border-slate-200 pl-2">
-                  Atelier Editorial A4
-                </span>
-              </div>
-            </div>
-          </div>
+      {/* Studio Header Bar */}
+      <StudioHeader
+        title={title}
+        onTitleChange={setTitle}
+        presets={PRESETS}
+        onSelectPreset={loadPreset}
+        onDownloadActivity={handleDownloadActivity}
+        onDownloadSolution={handleDownloadSolution}
+        isDownloading={isExporting}
+      />
 
-          {/* Quick Presets */}
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-slate-400 font-medium hidden md:inline mr-1 text-[11px]">
-              Temas listos:
-            </span>
-            {Object.entries(PRESETS).map(([key, p]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => loadPreset(key as keyof typeof PRESETS)}
-                className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition-all duration-150 cursor-pointer flex items-center gap-1.5 active:scale-[0.98] ${
-                  title === p.title
-                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                    : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
-                }`}
-              >
-                <span>{p.emoji}</span>
-                <span className="hidden sm:inline">{p.title.split(" ")[0]}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Two-Column Studio Layout */}
+      {/* Main Studio Workbench */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-          {/* Left Column: Configuration & Content (5 columns) */}
-          <div className="lg:col-span-5 space-y-5">
-            {/* Card 1: Activity Format & General Options */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h2 className="text-xs font-bold text-slate-900 flex items-center gap-2 tracking-tight uppercase">
-                  <SlidersHorizontal size={14} className="text-slate-500" />
-                  Formato de Actividad
-                </h2>
-                <div className="flex items-center gap-2">
+          {/* Left Column: 3-Step Creation Sidebar (5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
+            {/* Step Progress Navigation Bar */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-1.5 flex items-center gap-1">
+              {[
+                { step: 1, label: "Formato", icon: SlidersHorizontal },
+                { step: 2, label: "Contenido", icon: PenTool },
+                { step: 3, label: "Hoja A4", icon: GraduationCap },
+              ].map((s) => {
+                const Icon = s.icon;
+                const isActive = activeStep === s.step;
+                return (
+                  <button
+                    key={s.step}
+                    type="button"
+                    onClick={() => setActiveStep(s.step as 1 | 2 | 3)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+                      isActive
+                        ? "bg-slate-900 text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Icon size={14} className={isActive ? "text-white" : "text-slate-400"} />
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* STEP 1: Formato de Actividad */}
+            {activeStep === 1 && (
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4 animate-in fade-in-50 duration-150">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 font-mono font-bold text-xs flex items-center justify-center">
+                      1
+                    </span>
+                    <h2 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                      Tipo de Actividad y Parámetros
+                    </h2>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setRegenerateKey((k) => k + 1)}
                     title="Generar nueva variación aleatoria"
-                    className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium active:scale-[0.97]"
+                    className="px-2.5 py-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold active:scale-[0.97]"
                   >
                     <RefreshCw size={12} className="stroke-[2.2]" />
                     <span>Regenerar</span>
                   </button>
                 </div>
-              </div>
 
-              {/* Categorized Activity Picker */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
-                  Tipo de Juego
-                </label>
-                <ActivityCategoryPicker
-                  selectedType={type}
-                  onSelect={handleSelectActivity}
-                />
-              </div>
-
-              {/* Title Input */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Título de la Ficha
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ej: Repaso de Ciencias Naturales"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-3 focus:ring-blue-600/10 outline-none text-xs font-semibold transition-all bg-white text-slate-900 shadow-2xs"
-                />
-              </div>
-
-              {/* Difficulty Controls */}
-              {["wordsearch", "cryptogram", "sudoku", "mathpyramid", "crossmath"].includes(
-                type
-              ) && (
+                {/* Activity Category Picker */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Nivel de Dificultad
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Selecciona el Formato Editorial
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "easy", label: "Fácil", badge: "Inicial" },
-                      { id: "medium", label: "Medio", badge: "Estándar" },
-                      { id: "hard", label: "Difícil", badge: "Reto" },
-                    ].map((d) => (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => setDifficulty(d.id as Difficulty)}
-                        className={`py-2 px-1 rounded-xl border text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center active:scale-[0.98] ${
-                          difficulty === d.id
-                            ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                            : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
-                        }`}
-                      >
-                        <span className="text-xs font-bold">{d.label}</span>
-                        <span className="text-[10px] opacity-70 mt-0.5 font-medium">
-                          {d.badge}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  <ActivityCategoryPicker
+                    selectedType={type}
+                    onSelect={handleSelectActivity}
+                  />
                 </div>
-              )}
 
-              {/* Sudoku Controls */}
-              {type === "sudoku" && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Tamaño del Tablero
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { size: 4, label: "4x4 (Infantil)" },
-                      { size: 6, label: "6x6 (Junior)" },
-                      { size: 9, label: "9x9 (Clásico)" },
-                    ].map((s) => (
-                      <button
-                        key={s.size}
-                        type="button"
-                        onClick={() => setSudokuSize(s.size as 4 | 6 | 9)}
-                        className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                          sudokuSize === s.size
-                            ? "bg-slate-900 text-white border-slate-900 font-bold"
-                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer pt-1">
-                    <input
-                      type="checkbox"
-                      checked={sudokuEmojis}
-                      onChange={(e) => setSudokuEmojis(e.target.checked)}
-                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
-                    />
-                    Modo infantil con iconos animales (🐱🐶🐰🦊)
-                  </label>
-                </div>
-              )}
-
-              {/* Math Pyramid Controls */}
-              {type === "mathpyramid" && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Pisos de la Pirámide
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[3, 4].map((lvl) => (
-                        <button
-                          key={lvl}
-                          type="button"
-                          onClick={() => setPyramidLevels(lvl)}
-                          className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                            pyramidLevels === lvl
-                              ? "bg-slate-900 text-white border-slate-900 font-bold"
-                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                          }`}
-                        >
-                          {lvl} Niveles
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Cantidad de Ejercicios por Hoja
+                {/* Difficulty Controls */}
+                {["wordsearch", "cryptogram", "sudoku", "mathpyramid", "crossmath"].includes(
+                  type
+                ) && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">
+                      Nivel de Dificultad
                     </label>
                     <div className="grid grid-cols-3 gap-2">
-                      {[1, 2, 3].map((cnt) => (
+                      {[
+                        { id: "easy", label: "Fácil", badge: "Primaria Inicial" },
+                        { id: "medium", label: "Medio", badge: "Estándar" },
+                        { id: "hard", label: "Difícil", badge: "Reto / Avanzado" },
+                      ].map((d) => (
                         <button
-                          key={cnt}
+                          key={d.id}
                           type="button"
-                          onClick={() => setPyramidCount(cnt)}
-                          className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                            pyramidCount === cnt
-                              ? "bg-slate-900 text-white border-slate-900 font-bold"
-                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                          onClick={() => setDifficulty(d.id as Difficulty)}
+                          className={`py-2 px-1 rounded-xl border text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center active:scale-[0.98] ${
+                            difficulty === d.id
+                              ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                              : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
                           }`}
                         >
-                          {cnt} {cnt === 1 ? "Pirámide" : "Pirámides"}
+                          <span className="text-xs font-bold">{d.label}</span>
+                          <span className="text-[10px] opacity-70 mt-0.5 font-medium">
+                            {d.badge}
+                          </span>
                         </button>
                       ))}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Maze Controls */}
-              {type === "maze" && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Complejidad del Laberinto
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { size: 11, label: "Pequeño (11x11)" },
-                      { size: 15, label: "Mediano (15x15)" },
-                      { size: 21, label: "Grande (21x21)" },
-                    ].map((m) => (
-                      <button
-                        key={m.size}
-                        type="button"
-                        onClick={() => setMazeSize(m.size)}
-                        className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                          mazeSize === m.size
-                            ? "bg-slate-900 text-white border-slate-900 font-bold"
-                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
+                {/* Sudoku Controls */}
+                {type === "sudoku" && (
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Tamaño del Tablero
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { size: 4, label: "4x4 (Infantil)" },
+                        { size: 6, label: "6x6 (Junior)" },
+                        { size: 9, label: "9x9 (Clásico)" },
+                      ].map((s) => (
+                        <button
+                          key={s.size}
+                          type="button"
+                          onClick={() => setSudokuSize(s.size as 4 | 6 | 9)}
+                          className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
+                            sudokuSize === s.size
+                              ? "bg-slate-900 text-white border-slate-900 font-bold"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer pt-1">
+                      <input
+                        type="checkbox"
+                        checked={sudokuEmojis}
+                        onChange={(e) => setSudokuEmojis(e.target.checked)}
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                      />
+                      Modo infantil con emoticonos (🐱🐶🐰🦊)
+                    </label>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Pixel Art Controls */}
-              {type === "pixelart" && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Dibujo / Mosaico
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.values(PIXEL_TEMPLATES).map((tmpl) => (
-                      <button
-                        key={tmpl.id}
-                        type="button"
-                        onClick={() => setPixelArtKey(tmpl.id)}
-                        className={`py-2 px-1 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                          pixelArtKey === tmpl.id
-                            ? "bg-slate-900 text-white border-slate-900 font-bold"
-                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        {tmpl.name.split(" ")[0]}
-                      </button>
-                    ))}
+                {/* Math Pyramid Controls */}
+                {type === "mathpyramid" && (
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Pisos de la Pirámide
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[3, 4].map((lvl) => (
+                          <button
+                            key={lvl}
+                            type="button"
+                            onClick={() => setPyramidLevels(lvl)}
+                            className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
+                              pyramidLevels === lvl
+                                ? "bg-slate-900 text-white border-slate-900 font-bold"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            {lvl} Pisos
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Cantidad de Ejercicios por Hoja
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[1, 2, 3].map((cnt) => (
+                          <button
+                            key={cnt}
+                            type="button"
+                            onClick={() => setPyramidCount(cnt)}
+                            className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
+                              pyramidCount === cnt
+                                ? "bg-slate-900 text-white border-slate-900 font-bold"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            {cnt} {cnt === 1 ? "Pirámide" : "Pirámides"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Print Specs Callout */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Printer size={13} className="text-slate-400" />
-                  Salida vectorial optimizada para fotocopias en A4
-                </span>
-                <span className="text-[10px] font-mono text-slate-400 font-semibold">
-                  300 DPI
-                </span>
+                {/* Maze Controls */}
+                {type === "maze" && (
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Complejidad del Laberinto
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { size: 11, label: "Pequeño (11x11)" },
+                        { size: 15, label: "Mediano (15x15)" },
+                        { size: 21, label: "Grande (21x21)" },
+                      ].map((m) => (
+                        <button
+                          key={m.size}
+                          type="button"
+                          onClick={() => setMazeSize(m.size)}
+                          className={`py-2 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
+                            mazeSize === m.size
+                              ? "bg-slate-900 text-white border-slate-900 font-bold"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pixel Art Controls */}
+                {type === "pixelart" && (
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Plantilla de Mosaico
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.values(PIXEL_TEMPLATES).map((tmpl) => (
+                        <button
+                          key={tmpl.id}
+                          type="button"
+                          onClick={() => setPixelArtKey(tmpl.id)}
+                          className={`py-2 px-1 text-center rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
+                            pixelArtKey === tmpl.id
+                              ? "bg-slate-900 text-white border-slate-900 font-bold"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          {tmpl.name.split(" ")[0]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation forward to Step 2 */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveStep(2)}
+                    className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+                  >
+                    <span>Continuar al Contenido</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Card 2: Dynamic Content Editor */}
+            {/* STEP 2: Contenido Inteligente */}
+            {activeStep === 2 && (
+              <div className="space-y-4 animate-in fade-in-50 duration-150">
+                {/* A) Word-Based Activities (WordSearch, Crossword, Scramble, Matching) */}
+                {isWordBased && (
+                  <WordTableEditor
+                    items={items}
+                    onAddItem={addItem}
+                    onUpdateItem={updateItem}
+                    onRemoveItem={removeItem}
+                    onClearItems={clearItems}
+                    onBulkImport={handleBulkImport}
+                    showClueField={["crossword", "matching", "scramble"].includes(type)}
+                    minWordsNeeded={type === "crossword" ? 3 : 2}
+                  />
+                )}
 
-            {/* A) Word-based (WordSearch, Crossword, Scramble, Matching) */}
-            {["wordsearch", "crossword", "scramble", "matching"].includes(type) && (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
-                      Lista de Palabras
-                    </h3>
-                    <span className="text-[11px] font-mono font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                      {validWordsCount}
+                {/* B) Cryptogram Editor */}
+                {type === "cryptogram" && (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 font-mono font-bold text-xs flex items-center justify-center">
+                        2
+                      </span>
+                      <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                        Frase Secreta a Cifrar
+                      </h3>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Mensaje Oculto
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={cryptoPhrase}
+                        onChange={(e) => setCryptoPhrase(e.target.value)}
+                        placeholder="Escribe la frase que los alumnos descifrarán..."
+                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs uppercase font-mono font-bold text-slate-900 leading-relaxed shadow-2xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Pista o Contexto Curricular (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cryptoHint}
+                        onChange={(e) => setCryptoHint(e.target.value)}
+                        placeholder="Ej: Curiosidades del espacio"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs text-slate-800 shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* C) Cloze Test Editor */}
+                {type === "cloze" && (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 font-mono font-bold text-xs flex items-center justify-center">
+                        2
+                      </span>
+                      <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                        Texto del Ejercicio
+                      </h3>
+                    </div>
+
+                    <div className="p-3 bg-blue-50/60 border border-blue-200/60 rounded-xl text-xs text-blue-900 flex items-start gap-2">
+                      <Info size={15} className="text-blue-600 shrink-0 mt-0.5" />
+                      <p className="leading-relaxed">
+                        Coloca entre corchetes <code>[palabra]</code> los conceptos clave que se
+                        ocultarán en el banco de respuestas.
+                      </p>
+                    </div>
+
+                    <textarea
+                      rows={6}
+                      value={clozeText}
+                      onChange={(e) => setClozeText(e.target.value)}
+                      className="w-full p-3.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs leading-relaxed text-slate-800 font-sans shadow-2xs"
+                    />
+                  </div>
+                )}
+
+                {/* D) Rosco Editor */}
+                {type === "rosco" && (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 font-mono font-bold text-xs flex items-center justify-center">
+                        2
+                      </span>
+                      <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                        Rueda de Palabras (A - Z)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      El rosco incluye 25 definiciones escolares calibradas curricularmente. Se
+                      imprime en pliego de preguntas y respuestas listo para proyectar o resolver
+                      en clase.
+                    </p>
+                  </div>
+                )}
+
+                {/* E) Procedural Math & Visual Activities Callout */}
+                {["sudoku", "mathpyramid", "crossmath", "maze", "pixelart"].includes(type) && (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 font-mono font-bold text-xs flex items-center justify-center">
+                        2
+                      </span>
+                      <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                        Generación Procedural
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Esta actividad se genera con algoritmos matemáticos en tiempo real. Puedes
+                      ajustar parámetros en el <strong>Paso 1</strong> o crear variaciones nuevas
+                      con el botón de regenerar.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => setRegenerateKey((k) => k + 1)}
+                      className="w-full py-2.5 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
+                    >
+                      <Dices size={15} className="text-blue-600" />
+                      <span>Generar Nueva Variación Aleatoria</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Navigation forward/backward */}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveStep(1)}
+                    className="py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <ArrowLeft size={14} />
+                    <span>Atrás</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveStep(3)}
+                    className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+                  >
+                    <span>Configurar Hoja A4</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: Opciones de Pliego e Impresión */}
+            {activeStep === 3 && (
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-5 animate-in fade-in-50 duration-150">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 font-mono font-bold text-xs flex items-center justify-center">
+                    3
+                  </span>
+                  <h2 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
+                    Encabezado Escolar y Exportación
+                  </h2>
+                </div>
+
+                {/* Sheet Header Customizer Component */}
+                <SheetHeaderCustomizer
+                  options={headerOptions}
+                  onChange={setHeaderOptions}
+                />
+
+                {/* Print Quality Specs */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1.5">
+                  <div className="flex items-center justify-between font-semibold text-slate-800">
+                    <span className="flex items-center gap-1.5">
+                      <Printer size={13} className="text-slate-500" />
+                      Especificación de Taller Editorial
+                    </span>
+                    <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-bold">
+                      A4 300 DPI
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={clearItems}
-                      title="Reiniciar lista"
-                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <RotateCcw size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={addItem}
-                      className="flex items-center gap-1 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow-2xs cursor-pointer"
-                    >
-                      <Plus size={13} />
-                      Añadir
-                    </button>
-                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Trazo vectorial de alto contraste y márgenes de 18 mm calibrados para fotocopiadoras y guillotinas escolares.
+                  </p>
                 </div>
 
-                <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-                  {items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 bg-slate-50/70 rounded-xl border border-slate-200/90 hover:border-slate-300 hover:bg-white transition-all flex items-start gap-2.5 group"
-                    >
-                      <span className="w-5 h-5 rounded bg-slate-200/80 text-slate-600 flex items-center justify-center text-[10px] font-mono font-bold shrink-0 mt-1.5">
-                        {(idx + 1).toString().padStart(2, "0")}
-                      </span>
+                {/* Direct Action Download Buttons */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDownloadActivity}
+                    disabled={isExporting}
+                    className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+                  >
+                    <FileCheck2 size={16} />
+                    <span>Descargar Ficha para Alumnos (PDF)</span>
+                  </button>
 
-                      <div className="flex-1 space-y-1.5">
-                        <input
-                          type="text"
-                          value={item.word}
-                          onChange={(e) => updateItem(idx, "word", e.target.value)}
-                          placeholder="PALABRA"
-                          className="w-full bg-white px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none uppercase font-mono text-xs font-bold tracking-wide text-slate-900 shadow-2xs"
-                        />
-                        {["crossword", "matching", "scramble"].includes(type) && (
-                          <input
-                            type="text"
-                            value={item.clue}
-                            onChange={(e) => updateItem(idx, "clue", e.target.value)}
-                            placeholder="Pista o definición..."
-                            className="w-full bg-white px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs text-slate-700 shadow-2xs"
-                          />
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeItem(idx)}
-                        disabled={items.length === 1}
-                        title="Eliminar palabra"
-                        className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-20 disabled:hover:text-slate-300 disabled:hover:bg-transparent rounded-lg transition-colors cursor-pointer mt-1"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={handleDownloadSolution}
+                    disabled={isExporting}
+                    className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
+                  >
+                    <CheckCircle2 size={15} className="text-rose-600" />
+                    <span>Descargar Hoja de Respuestas (Solución)</span>
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="w-full py-2.5 border border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
-                >
-                  <Plus size={14} />
-                  Añadir otra palabra
-                </button>
-              </div>
-            )}
-
-            {/* B) Cryptogram Editor */}
-            {type === "cryptogram" && (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3.5">
-                <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
-                  Frase Secreta a Cifrar
-                </h3>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Texto Oculto
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={cryptoPhrase}
-                    onChange={(e) => setCryptoPhrase(e.target.value)}
-                    placeholder="Escribe la frase que los alumnos deberán descifrar..."
-                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs uppercase font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Pista o Temática (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={cryptoHint}
-                    onChange={(e) => setCryptoHint(e.target.value)}
-                    placeholder="Ej: Curiosidades del espacio"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs text-slate-800"
-                  />
+                {/* Navigation back to Step 2 */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveStep(2)}
+                    className="w-full py-2 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Volver a Editar Contenido</span>
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* C) Cloze Test Editor */}
-            {type === "cloze" && (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3.5">
-                <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
-                  Texto del Ejercicio
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Coloca entre corchetes <code>[palabra]</code> los términos que quieras ocultar
-                  para el banco de opciones, o escribe normalmente para selección automática.
-                </p>
-                <textarea
-                  rows={6}
-                  value={clozeText}
-                  onChange={(e) => setClozeText(e.target.value)}
-                  className="w-full p-3.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none text-xs leading-relaxed text-slate-800 font-sans"
-                />
-              </div>
-            )}
-
-            {/* D) Rosco Editor */}
-            {type === "rosco" && (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3">
-                <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
-                  Rueda de Palabras (A - Z)
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Incluye las 25 definiciones escolares calibradas de la A a la Z. Puedes
-                  descargar directamente el pliego de preguntas y su solucionario.
-                </p>
-              </div>
-            )}
+            {/* Local persistence subtle indicator */}
+            <div className="flex items-center justify-between px-2 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Borrador guardado localmente
+              </span>
+              <span className="font-mono text-[10px]">GenAct Studio 2.0</span>
+            </div>
           </div>
 
-          {/* Right Column: Physical Paper Canvas & PDF Export (7 columns) */}
+          {/* Right Column: Physical Paper Canvas & PDF Export (7 cols) */}
           <div className="lg:col-span-7 sticky top-20">
             <ActivityPreview
               type={type}
@@ -699,6 +910,8 @@ export default function Home() {
               crossMathResult={crossMathResult}
               mazeResult={mazeResult}
               pixelArtResult={pixelArtResult}
+              headerOptions={headerOptions}
+              onTriggerDownload={handleRegisterDownload}
             />
           </div>
         </div>
