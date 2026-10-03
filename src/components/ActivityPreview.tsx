@@ -348,36 +348,48 @@ export const ActivityPreview = ({
             {/* 1. Sopa de Letras */}
             {type === "wordsearch" && wordSearchResult && (
               <div className="flex flex-col items-center gap-5">
-                <div
-                  className="grid gap-1 p-2 bg-slate-50 rounded-xl border border-slate-200 inline-block shadow-2xs"
-                  style={{ gridTemplateColumns: `repeat(${wordSearchResult.size}, minmax(0, 1fr))` }}
-                >
-                  {wordSearchResult.grid.map((row, r) =>
-                    row.map((char, c) => {
-                      const isSol =
-                        showSolution &&
-                        wordSearchResult.placedWords.some((w) =>
-                          Array.from({ length: w.word.length }).some((_, i) => {
-                            const py = w.y + w.direction[0] * i;
-                            const px = w.x + w.direction[1] * i;
-                            return py === r && px === c;
-                          })
-                        );
+                <div className="flex justify-center w-full overflow-x-auto p-1">
+                  <div
+                    className="gap-1 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${wordSearchResult.size}, minmax(0, 1fr))`,
+                    }}
+                  >
+                    {wordSearchResult.grid.map((row, r) =>
+                      row.map((char, c) => {
+                        const isSol =
+                          showSolution &&
+                          wordSearchResult.placedWords.some((w) =>
+                            Array.from({ length: w.word.length }).some((_, i) => {
+                              const py = w.y + w.direction[0] * i;
+                              const px = w.x + w.direction[1] * i;
+                              return py === r && px === c;
+                            })
+                          );
 
-                      return (
-                        <div
-                          key={`${r}-${c}`}
-                          className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-mono text-xs sm:text-sm font-bold rounded transition-colors ${
-                            isSol
-                              ? "bg-rose-600 text-white shadow-xs font-black"
-                              : "bg-white text-slate-800 border border-slate-200/90"
-                          }`}
-                        >
-                          {char}
-                        </div>
-                      );
-                    })
-                  )}
+                        const cellSize =
+                          wordSearchResult.size <= 10
+                            ? "w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm"
+                            : wordSearchResult.size <= 14
+                            ? "w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm"
+                            : "w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs";
+
+                        return (
+                          <div
+                            key={`${r}-${c}`}
+                            className={`${cellSize} flex items-center justify-center font-mono font-bold rounded transition-colors ${
+                              isSol
+                                ? "bg-rose-600 text-white shadow-xs font-black"
+                                : "bg-white text-slate-800 border border-slate-200/90"
+                            }`}
+                          >
+                            {char}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
 
                 {/* Palabras a buscar */}
@@ -406,6 +418,7 @@ export const ActivityPreview = ({
                   <div
                     className="grid gap-0.5 p-2 bg-slate-100/70 rounded-xl border border-slate-200"
                     style={{
+                      display: "grid",
                       gridTemplateColumns: `repeat(${crosswordResult.width}, minmax(0, 1fr))`,
                     }}
                   >
@@ -694,7 +707,8 @@ export const ActivityPreview = ({
                 <div
                   className="grid gap-0 bg-slate-900 p-0.5 rounded-lg shadow-sm border border-slate-900"
                   style={{
-                    gridTemplateColumns: `repeat(${sudokuResult.size}, minmax(0, 1fr))`
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${sudokuResult.size}, minmax(0, 1fr))`,
                   }}
                 >
                   {Array.from({ length: sudokuResult.size }, (_, r) =>
