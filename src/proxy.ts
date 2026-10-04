@@ -5,7 +5,12 @@ import { getSupabasePublicEnvironment } from "@/lib/supabase/env";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const { url, publishableKey } = getSupabasePublicEnvironment();
+  const env = getSupabasePublicEnvironment();
+  if (!env) {
+    return response;
+  }
+
+  const { url, publishableKey } = env;
 
   const supabase = createServerClient<Database>(url, publishableKey, {
     cookies: {
@@ -30,8 +35,13 @@ export async function proxy(request: NextRequest) {
 
   // Refresh cookies before rendering. A missing session is valid: this proxy
   // never fabricates an identity or redirects logged-out visitors.
-  await supabase.auth.getClaims();
-  response.headers.set("Cache-Control", "private, no-store");
+  try {
+    await supabase.auth.getClaims();
+    response.headers.set("Cache-Control", "private, no-store");
+  } catch {
+    // Non-fatal if Supabase is unreachable or uninitialized
+  }
+
   return response;
 }
 
