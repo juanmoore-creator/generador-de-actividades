@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,10 +49,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     return () => map.forEach((t) => clearTimeout(t));
   }, []);
 
+  const value = useMemo(() => ({ show }), [show]);
+
   const icons = { ok: CheckCircle2, error: AlertCircle, info: Info };
 
   return (
-    <ToastContext.Provider value={{ show }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div
         aria-live="polite"

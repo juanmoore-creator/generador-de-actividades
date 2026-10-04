@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Download, Share, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -99,35 +99,62 @@ export function InstallBanner() {
 /** Registra el service worker y avisa cuando hay una versión nueva. */
 export function useServiceWorker() {
   const toast = useToast();
+  const toastRef = useRef(toast);
   useEffect(() => {
-    if (!("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;
+    toastRef.current = toast;
+  }, [toast]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;
     const version = process.env.NEXT_PUBLIC_BUILD_ID || "dev";
     let refreshing = false;
+    let prompted = false;
 
-    const promptUpdate = (worker: ServiceWorker) =>
-      toast.show("Hay una versión nueva de GenAct.", {
+    const promptUpdate = (worker: ServiceWorker) => {
+      if (prompted) return;
+      prompted = true;
+      toastRef.current.show("Hay una nueva versión de GenAct disponible.", {
         tone: "info",
-        duration: 60_000,
-        action: { label: "Actualizar", onClick: () => worker.postMessage({ type: "SKIP_WAITING" }) },
+        duration: 15_000,
+        action: {
+          label: "Actualizar",
+          onClick: () => {
+            worker.postMessage({ type: "SKIP_WAITING" });
+          },
+        },
       });
+    };
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const onControllerChange = () => {
       if (refreshing) return;
       refreshing = true;
       window.location.reload();
-    });
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
     navigator.serviceWorker
       .register(`/sw.js?v=${encodeURIComponent(version)}`, { scope: "/", updateViaCache: "none" })
       .then((reg) => {
-        if (reg.waiting && navigator.serviceWorker.controller) promptUpdate(reg.waiting);
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          promptUpdate(reg.waiting);
+        }
+
         reg.addEventListener("updatefound", () => {
           const worker = reg.installing;
-          worker?.addEventListener("statechange", () => {
-            if (worker.state === "installed" && navigator.serviceWorker.controller) promptUpdate(worker);
+          if (!worker) return;
+
+          worker.addEventListener("statechange", () => {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              promptUpdate(worker);
+            }
           });
         });
       })
       .catch((err) => console.warn("No se pudo registrar el service worker", err));
-  }, [toast]);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+    };
+  }, []);
 }
