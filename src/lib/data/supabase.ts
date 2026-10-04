@@ -163,13 +163,17 @@ export function createSupabaseProvider(url: string, anonKey: string): DataProvid
       const next = { ...(current as Profile), ...patch };
       const { error } = await sb
         .from("profiles")
-        .update({
-          name: next.name,
-          school: next.school,
-          role: next.role,
-          preferences: { defaultHeader: next.defaultHeader, defaultPageSize: next.defaultPageSize },
-        })
-        .eq("id", user.id);
+        .upsert(
+          {
+            id: user.id,
+            name: next.name,
+            display_name: next.name,
+            school: next.school,
+            role: next.role,
+            preferences: { defaultHeader: next.defaultHeader, defaultPageSize: next.defaultPageSize },
+          },
+          { onConflict: "id" }
+        );
       fail(error);
       return next;
     },

@@ -24,7 +24,8 @@ insert into auth.users (
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
-insert into public.profiles (display_name) values ('Foundation A');
+insert into public.profiles (display_name) values ('Foundation A')
+on conflict (id) do update set display_name = excluded.display_name;
 insert into public.activities (title, type, difficulty, snapshot)
 values ('A private activity', 'sudoku', 'easy', '{"size":4}');
 insert into public.community_feed (title, type, snapshot, tags)
@@ -49,7 +50,8 @@ update public.activities set title = 'A updated activity' where title = 'A priva
 update public.profiles set display_name = 'Foundation A updated';
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000b2', true);
-insert into public.profiles (display_name) values ('Foundation B');
+insert into public.profiles (display_name) values ('Foundation B')
+on conflict (id) do update set display_name = excluded.display_name;
 insert into public.activities (title, type, snapshot)
 values ('B private activity', 'maze', '{"width":2}');
 

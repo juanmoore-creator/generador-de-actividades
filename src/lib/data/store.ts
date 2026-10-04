@@ -38,15 +38,19 @@ function setState(patch: Partial<DataState>) {
   listeners.forEach((l) => l());
 }
 
+const supabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
 export const SUPABASE_CONFIGURED = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL && supabaseKey
 );
 
 async function getProvider(): Promise<DataProvider> {
   if (provider) return provider;
   if (SUPABASE_CONFIGURED) {
     const { createSupabaseProvider } = await import("./supabase");
-    provider = createSupabaseProvider(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    provider = createSupabaseProvider(process.env.NEXT_PUBLIC_SUPABASE_URL!, supabaseKey!);
   } else {
     provider = createLocalProvider();
   }

@@ -21,6 +21,7 @@ export type Database = {
           folder: string
           id: string
           is_favorite: boolean
+          is_published: boolean
           notes: string
           snapshot: Json
           title: string
@@ -34,6 +35,7 @@ export type Database = {
           folder?: string
           id?: string
           is_favorite?: boolean
+          is_published?: boolean
           notes?: string
           snapshot: Json
           title: string
@@ -47,6 +49,7 @@ export type Database = {
           folder?: string
           id?: string
           is_favorite?: boolean
+          is_published?: boolean
           notes?: string
           snapshot?: Json
           title?: string
@@ -69,9 +72,13 @@ export type Database = {
           author_id: string
           created_at: string
           description: string
+          difficulty: string
+          downloads_count: number
           grade: string
           id: string
+          likes_count: number
           snapshot: Json
+          source_activity_id: string | null
           subject: string
           tags: string[]
           title: string
@@ -82,9 +89,13 @@ export type Database = {
           author_id?: string
           created_at?: string
           description?: string
+          difficulty?: string
+          downloads_count?: number
           grade?: string
           id?: string
+          likes_count?: number
           snapshot: Json
+          source_activity_id?: string | null
           subject?: string
           tags?: string[]
           title: string
@@ -95,9 +106,13 @@ export type Database = {
           author_id?: string
           created_at?: string
           description?: string
+          difficulty?: string
+          downloads_count?: number
           grade?: string
           id?: string
+          likes_count?: number
           snapshot?: Json
+          source_activity_id?: string | null
           subject?: string
           tags?: string[]
           title?: string
@@ -111,6 +126,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_feed_source_activity_owner_fkey"
+            columns: ["author_id", "source_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["user_id", "id"]
           },
         ]
       }
@@ -147,12 +169,51 @@ export type Database = {
           },
         ]
       }
+      profile_settings: {
+        Row: {
+          created_at: string
+          preferences: Json
+          role: string
+          school: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          preferences?: Json
+          role?: string
+          school?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          preferences?: Json
+          role?: string
+          school?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           display_name: string
           id: string
+          name: string
+          preferences: Json
+          role: string
+          school: string
           updated_at: string
         }
         Insert: {
@@ -160,6 +221,10 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          name?: string
+          preferences?: Json
+          role?: string
+          school?: string
           updated_at?: string
         }
         Update: {
@@ -167,6 +232,10 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          name?: string
+          preferences?: Json
+          role?: string
+          school?: string
           updated_at?: string
         }
         Relationships: []
@@ -176,7 +245,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_download: { Args: { community_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

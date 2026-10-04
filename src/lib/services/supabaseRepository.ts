@@ -22,10 +22,11 @@ export type CreateActivityInput = Pick<ActivityInsert, "title" | "type" | "snaps
   folder?: string;
   notes?: string;
   is_favorite?: boolean;
+  is_published?: boolean;
 };
 
 export type UpdateActivityInput = Partial<
-  Pick<ActivityInsert, "title" | "type" | "difficulty" | "folder" | "notes" | "is_favorite" | "snapshot">
+  Pick<ActivityInsert, "title" | "type" | "difficulty" | "folder" | "notes" | "is_favorite" | "is_published" | "snapshot">
 > & { type?: ActivityType; difficulty?: Difficulty };
 
 export type CreateCommunityPostInput = Pick<
@@ -33,6 +34,8 @@ export type CreateCommunityPostInput = Pick<
   "title" | "type" | "snapshot"
 > & {
   type: ActivityType;
+  difficulty?: Difficulty;
+  source_activity_id?: string | null;
   subject?: string;
   grade?: string;
   description?: string;
@@ -40,8 +43,8 @@ export type CreateCommunityPostInput = Pick<
 };
 
 export type UpdateCommunityPostInput = Partial<
-  Pick<FeedInsert, "title" | "type" | "subject" | "grade" | "description" | "tags" | "snapshot">
-> & { type?: ActivityType };
+  Pick<FeedInsert, "title" | "type" | "difficulty" | "source_activity_id" | "subject" | "grade" | "description" | "tags" | "snapshot">
+> & { type?: ActivityType; difficulty?: Difficulty };
 
 export type PageOptions = Readonly<{ page?: number; pageSize?: number }>;
 
@@ -59,9 +62,9 @@ export class SupabaseRepositoryError extends Error {
 type Client = SupabaseClient<Database>;
 
 const ACTIVITY_COLUMNS =
-  "id,title,type,difficulty,folder,notes,is_favorite,snapshot,created_at,updated_at" as const;
+  "id,title,type,difficulty,folder,notes,is_favorite,is_published,snapshot,created_at,updated_at" as const;
 const COMMUNITY_COLUMNS =
-  "id,title,type,subject,grade,description,tags,snapshot,author_id,created_at,updated_at" as const;
+  "id,title,type,difficulty,subject,grade,description,tags,snapshot,author_id,likes_count,downloads_count,source_activity_id,created_at,updated_at" as const;
 const PAGE_SIZE_DEFAULT = 20;
 const PAGE_SIZE_MAX = 50;
 const PAGE_MAX = 200;
@@ -124,6 +127,7 @@ function activityUpdate(input: UpdateActivityInput): Partial<ActivityInsert> {
   if (input.folder !== undefined) patch.folder = input.folder;
   if (input.notes !== undefined) patch.notes = input.notes;
   if (input.is_favorite !== undefined) patch.is_favorite = input.is_favorite;
+  if (input.is_published !== undefined) patch.is_published = input.is_published;
   if (Object.keys(patch).length === 0) {
     throw new SupabaseRepositoryError("empty_update", "Provide at least one activity field to update.");
   }
@@ -135,6 +139,8 @@ function feedInsert(input: CreateCommunityPostInput): FeedInsert {
     title: input.title,
     type: input.type,
     snapshot: input.snapshot as Json,
+    ...(input.difficulty === undefined ? {} : { difficulty: input.difficulty }),
+    ...(input.source_activity_id === undefined ? {} : { source_activity_id: input.source_activity_id }),
     ...(input.subject === undefined ? {} : { subject: input.subject }),
     ...(input.grade === undefined ? {} : { grade: input.grade }),
     ...(input.description === undefined ? {} : { description: input.description }),
@@ -147,6 +153,8 @@ function feedUpdate(input: UpdateCommunityPostInput): Partial<FeedInsert> {
   if (input.title !== undefined) patch.title = input.title;
   if (input.type !== undefined) patch.type = input.type;
   if (input.snapshot !== undefined) patch.snapshot = input.snapshot;
+  if (input.difficulty !== undefined) patch.difficulty = input.difficulty;
+  if (input.source_activity_id !== undefined) patch.source_activity_id = input.source_activity_id;
   if (input.subject !== undefined) patch.subject = input.subject;
   if (input.grade !== undefined) patch.grade = input.grade;
   if (input.description !== undefined) patch.description = input.description;
