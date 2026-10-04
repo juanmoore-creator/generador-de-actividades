@@ -120,7 +120,7 @@ export const dataActions = {
   },
   async signUp(name: string, email: string, password: string) {
     const res = await (await getProvider()).signUp(name, email, password);
-    await refreshProfile();
+    await Promise.all([refreshProfile(), refreshSaved(), refreshCommunity()]);
     return res;
   },
   async sendMagicLink(email: string) {

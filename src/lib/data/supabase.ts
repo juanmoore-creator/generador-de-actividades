@@ -234,7 +234,7 @@ export function createSupabaseProvider(url: string, anonKey: string): DataProvid
       const [feed, likes] = await Promise.all([
         sb
           .from("community_feed")
-          .select("*, author:profiles(name, school)")
+          .select("*, author:profiles!community_feed_author_id_fkey(name, school)")
           .order("created_at", { ascending: false })
           .limit(200),
         user ? sb.from("community_likes").select("community_id") : Promise.resolve({ data: [], error: null }),
@@ -261,7 +261,7 @@ export function createSupabaseProvider(url: string, anonKey: string): DataProvid
           tags: details.tags,
           snapshot,
         })
-        .select("*, author:profiles(name, school)")
+        .select("*, author:profiles!community_feed_author_id_fkey(name, school)")
         .single<CommunityRow>();
       fail(error);
       return toCommunity(data!, new Set());
