@@ -17,6 +17,7 @@ import { BottomNav, TopBar } from "./Navigation";
 import { SaveDialog } from "./SaveDialog";
 import { PublishDialog } from "./PublishDialog";
 import { AuthDialog } from "./AuthDialog";
+import { ThemePackModal } from "./ThemePackModal";
 import { InstallBanner, useServiceWorker } from "./PwaPrompts";
 
 const TABS: AppTab[] = ["home", "studio", "saved", "community", "profile"];
@@ -46,6 +47,7 @@ export function AppShell() {
 function Shell() {
   const [tab, setTab] = useState<AppTab>(tabFromUrl);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [themePackOpen, setThemePackOpen] = useState(false);
   const [publishing, setPublishing] = useState<ActivitySnapshot | null>(null);
   const [auth, setAuth] = useState<{ reason?: string } | null>(null);
   const { snapshot, dispatch, state } = useStudio();
@@ -117,6 +119,7 @@ function Shell() {
       openPublish: (snap: ActivitySnapshot) => setPublishing(snap),
       openSave: () => setSaveOpen(true),
       openInStudio,
+      openThemePack: () => setThemePackOpen(true),
     }),
     [tab, navigate, openInStudio]
   );
@@ -138,6 +141,7 @@ function Shell() {
       <BottomNav />
 
       {saveOpen && <SaveDialog open onClose={() => setSaveOpen(false)} />}
+      {themePackOpen && <ThemePackModal open onClose={() => setThemePackOpen(false)} />}
       {publishing && <PublishDialog snapshot={publishing} onClose={() => setPublishing(null)} />}
       {auth && <AuthDialog open reason={auth.reason} onClose={() => setAuth(null)} />}
     </AppContext.Provider>

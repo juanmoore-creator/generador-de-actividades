@@ -21,4 +21,12 @@ describe("pegar lista", () => {
   it("no corta palabras compuestas con guion sin espacios", () => {
     expect(parseBulkText("medio-ambiente: entorno")[0]).toEqual({ word: "MEDIO-AMBIENTE", clue: "entorno" });
   });
+
+  it("entiende CSV estructurado con cabecera", () => {
+    const csv = `# tema: Biología\npalabra,pista\nCELULA,Unidad viva\nTEJIDO,Conjunto de células`;
+    expect(parseBulkText(csv)).toEqual([
+      { word: "CELULA", clue: "Unidad viva" },
+      { word: "TEJIDO", clue: "Conjunto de células" },
+    ]);
+  });
 });

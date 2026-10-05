@@ -13,6 +13,8 @@ export interface AppApi {
   openSave: () => void;
   /** Abre un snapshot en el estudio (desde Mis fichas o la comunidad). */
   openInStudio: (snapshot: ActivitySnapshot, savedId?: string | null) => void;
+  /** Abre el modal para importar un CSV de IA y generar un pack temático. */
+  openThemePack: () => void;
 }
 
 export const AppContext = createContext<AppApi | null>(null);

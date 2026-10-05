@@ -1,0 +1,14 @@
+# GenAct - Generador de Actividades Educativas Imprimibles
+> Aplicación web para diseñar y generar fichas educativas imprimibles en PDF: Sopas de letras, Crucigramas, Anagramas, Relacionar columnas, Pasapalabra, Criptogramas y más.
+
+## Generación de Fichas con IA a partir de Apuntes y Textos
+Para generar un conjunto de actividades educativas temáticas compatibles con GenAct:
+- URL de instrucciones: https://genact.app/instrucciones-ia
+- Prompt de sistema para IA: https://genact.app/instrucciones-ia/prompt
+
+## Formato del archivo CSV admitido
+- Formato: CSV estándar delimitado por coma (,) o punto y coma (;).
+- Encabezado opcional de tema: # tema: [Nombre del Tema]
+- Columnas: palabra,pista
+- Palabras: en mayúsculas, de 3 a 18 letras, sin tildes ni caracteres especiales (se acepta Ñ).
+- Pistas: concisas, didácticas, menores a 120 caracteres.

@@ -1,11 +1,24 @@
 import type { WordItem } from "../types/activities";
+import { parseThemeCsv } from "../csv/themePack";
 
 /**
  * Convierte texto pegado en una lista de palabras con pistas.
- * Acepta una palabra por línea, "palabra: pista", "palabra - pista", "palabra = pista",
+ * Acepta CSV estructurado (# tema:, palabra,pista), una palabra por línea,
+ * "palabra: pista", "palabra - pista", "palabra = pista",
  * columnas separadas por tabulador (copiadas de una planilla) o "a, b, c".
  */
 export function parseBulkText(text: string): WordItem[] {
+  const trimmed = text.trim();
+  if (
+    trimmed.startsWith("#") ||
+    /^(?:palabra|word|concepto)[,;]/i.test(trimmed)
+  ) {
+    const csvResult = parseThemeCsv(text);
+    if (csvResult.items.length > 0) {
+      return csvResult.items;
+    }
+  }
+
   const results: WordItem[] = [];
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 

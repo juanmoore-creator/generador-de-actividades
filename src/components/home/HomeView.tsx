@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { ArrowRight, Search, PenLine, FolderOpen } from "lucide-react";
+import { ArrowRight, Search, PenLine, FolderOpen, Sparkles } from "lucide-react";
 import type { ActivityCategory, ActivityType, EducationLevel } from "@/lib/types/activities";
 import { ACTIVITIES, CATEGORIES, LEVELS, getActivity } from "@/lib/activities/catalog";
 import { createSnapshot } from "@/lib/activities/snapshot";
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ActivityIcon, CATEGORY_TONE } from "@/components/app/ActivityIcon";
 import { useStudio } from "@/components/studio/StudioContext";
+import { useApp } from "@/components/app/AppContext";
 import { useDataState } from "@/lib/data/store";
 import { SheetThumbnail } from "./SheetThumbnail";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ function FilterChip({ selected, onClick, children }: { selected: boolean; onClic
 export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
   const { snapshot, state } = useStudio();
   const { saved, profile } = useDataState();
+  const { openThemePack } = useApp();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [level, setLevel] = useState<LevelFilter>("all");
   const [query, setQuery] = useState("");
@@ -72,6 +74,44 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
         <p className="mt-1.5 max-w-2xl text-base text-ink-3">
           Elige una actividad, escribe tu contenido y descarga la ficha lista para imprimir, con su hoja de respuestas.
         </p>
+      </section>
+
+      {/* Banner destacado: Crear Pack Temático con IA (CSV) */}
+      <section aria-label="Pack con IA">
+        <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-r from-accent-soft/80 via-surface to-surface p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3.5">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-on-primary">
+                <Sparkles className="size-6 text-accent-ink" aria-hidden />
+              </span>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-accent-ink">
+                  Nuevo · IA + CSV
+                </div>
+                <h2 className="text-lg font-bold text-ink sm:text-xl">
+                  Crea un Pack Temático de Actividades
+                </h2>
+                <p className="max-w-xl text-sm text-ink-3">
+                  Sube o pega un CSV generado por ChatGPT, Claude o Gemini para armar Sopa de letras, Crucigrama, Anagramas y Relacionar columnas en un solo paso.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:self-center">
+              <a
+                href="/instrucciones-ia"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink cursor-pointer"
+              >
+                <span>Ver prompt para IA ↗</span>
+              </a>
+              <Button variant="primary" onClick={openThemePack} icon={<Sparkles className="size-4" aria-hidden />}>
+                Crear Pack Temático
+              </Button>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Atajos: continuar borrador y fichas guardadas */}
