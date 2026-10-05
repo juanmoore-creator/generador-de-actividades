@@ -3,7 +3,9 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
+  Copy,
   FileSpreadsheet,
   FileUp,
   HelpCircle,
@@ -12,6 +14,7 @@ import {
 } from "lucide-react";
 import type { ActivityType } from "@/lib/types/activities";
 import { parseThemeCsv } from "@/lib/csv/themePack";
+import { AI_SYSTEM_PROMPT } from "@/lib/csv/themePrompt";
 import { createThemePack, DEFAULT_PACK_ACTIVITIES } from "@/lib/activities/pack";
 import { getActivity } from "@/lib/activities/catalog";
 import { dataActions } from "@/lib/data/store";
@@ -41,6 +44,18 @@ export function ThemePackModal({ open, onClose }: Props) {
     ...DEFAULT_PACK_ACTIVITIES,
   ]);
   const [isCreating, setIsCreating] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(AI_SYSTEM_PROMPT);
+      setCopiedPrompt(true);
+      toast.show("¡Prompt copiado al portapapeles! Pégalo en tu IA favorita.", { tone: "info" });
+      setTimeout(() => setCopiedPrompt(false), 2500);
+    } catch {
+      toast.show("No se pudo copiar el texto. Revisa los permisos del navegador.", { tone: "error" });
+    }
+  };
 
   // Live parsing
   const parsed = useMemo(() => parseThemeCsv(csvText), [csvText]);
@@ -168,23 +183,46 @@ export function ThemePackModal({ open, onClose }: Props) {
       }
     >
       <div className="space-y-5">
-        {/* Banner de ayuda hacia la documentación pública */}
-        <div className="flex items-start gap-3 rounded-2xl border border-line bg-surface-2 p-3.5 text-sm">
-          <HelpCircle className="size-5 shrink-0 text-accent-ink mt-0.5" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-ink">¿Cómo obtener el CSV con Inteligencia Artificial?</p>
-            <p className="text-ink-3 text-xs mt-0.5">
-              Pásale tus apuntes a cualquier chat de IA con nuestras instrucciones preparadas para generar el archivo perfecto.
-            </p>
+        {/* Banner de ayuda hacia la documentación y copia rápida del prompt */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-line bg-surface-2 p-3.5 text-sm">
+          <div className="flex items-start gap-3 min-w-0">
+            <HelpCircle className="size-5 shrink-0 text-accent-ink mt-0.5" aria-hidden />
+            <div className="min-w-0">
+              <p className="font-semibold text-ink">¿Cómo obtener el CSV con Inteligencia Artificial?</p>
+              <p className="text-ink-3 text-xs mt-0.5">
+                Copia nuestro prompt listo y pégalo en ChatGPT, Claude o Gemini con tus apuntes. ¡No requiere que la IA navegue por internet!
+              </p>
+            </div>
           </div>
-          <a
-            href="/instrucciones-ia"
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 rounded-xl bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-ink transition-colors hover:bg-accent-soft/80"
-          >
-            Ver guía y prompt ↗
-          </a>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+            <button
+              type="button"
+              onClick={handleCopyPrompt}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-ink transition-colors hover:bg-accent-soft/80"
+              title="Copiar prompt para la IA"
+            >
+              {copiedPrompt ? (
+                <>
+                  <Check className="size-3.5 text-ok" aria-hidden />
+                  <span>¡Prompt copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5" aria-hidden />
+                  <span>Copiar prompt de IA</span>
+                </>
+              )}
+            </button>
+            <a
+              href="/instrucciones-ia"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-xl border border-line bg-surface px-2.5 py-1.5 text-xs font-medium text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+            >
+              <span>Ver guía</span>
+              <span aria-hidden>↗</span>
+            </a>
+          </div>
         </div>
 
         {/* Selector de modo de entrada: Pegar / Archivo */}

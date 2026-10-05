@@ -92,7 +92,7 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
                   Crea un Pack Temático de Actividades
                 </h2>
                 <p className="max-w-xl text-sm text-ink-3">
-                  Sube o pega un CSV generado por ChatGPT, Claude o Gemini para armar Sopa de letras, Crucigrama, Anagramas y Relacionar columnas en un solo paso.
+                  Copia nuestro prompt para ChatGPT, Claude o Gemini con tus apuntes y pega aquí el CSV para armar Sopa de letras, Crucigrama, Anagramas y Relacionar columnas al instante.
                 </p>
               </div>
             </div>
@@ -104,7 +104,7 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink cursor-pointer"
               >
-                <span>Ver prompt para IA ↗</span>
+                <span>Ver prompt e instrucciones ↗</span>
               </a>
               <Button variant="primary" onClick={openThemePack} icon={<Sparkles className="size-4" aria-hidden />}>
                 Crear Pack Temático

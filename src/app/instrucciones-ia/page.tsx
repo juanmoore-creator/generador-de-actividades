@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Bot, FileSpreadsheet, Sparkles, HelpCircle } from "lucide-react";
 import { PromptActions, CopyCsvInlineButton } from "./PromptActions";
-import { AI_SYSTEM_PROMPT } from "./prompt/route";
+import { AI_SYSTEM_PROMPT } from "@/lib/csv/themePrompt";
 
 export const metadata: Metadata = {
   title: "Instrucciones para generar actividades con IA | GenAct",
@@ -60,9 +60,10 @@ export default function InstruccionesIaPage() {
             Crea un Pack Temático de Actividades con Inteligencia Artificial
           </h1>
           <p className="text-base sm:text-lg text-ink-2 max-w-3xl leading-relaxed">
-            Pásale este enlace a cualquier modelo de IA (<strong>ChatGPT, Claude, Gemini</strong>) junto con tus textos,
-            resúmenes o apuntes. La IA leerá las especificaciones y te entregará un CSV compatible para generar
-            automáticamente <strong>Sopas de letras, Crucigramas, Anagramas y Relacionar columnas</strong> en segundos.
+            Copia nuestro prompt de instrucciones y pégalo en cualquier chat de IA (<strong>ChatGPT, Claude, Gemini</strong>) junto con tus textos,
+            resúmenes o apuntes. La IA te devolverá directamente el código CSV para generar
+            automáticamente <strong>Sopas de letras, Crucigramas, Anagramas y Relacionar columnas</strong> en segundos,{" "}
+            <strong>sin necesidad de que la IA tenga navegación web ni conexión a internet</strong>.
           </p>
 
           <div className="pt-2">
@@ -82,10 +83,10 @@ export default function InstruccionesIaPage() {
               <span className="grid size-8 place-items-center rounded-xl bg-surface-2 font-mono text-sm font-bold text-ink">
                 1
               </span>
-              <h3 className="font-bold text-ink">Pásale el link a la IA</h3>
+              <h3 className="font-bold text-ink">Copia y pega el prompt</h3>
               <p className="text-sm text-ink-3">
-                En tu chat de IA habitual, envíale el texto de tu clase o apunte y agrega el enlace a esta página, o copia el
-                prompt que tienes abajo.
+                Toca el botón <strong>«Copiar prompt para la IA»</strong> y pégalo en tu chat (ChatGPT, Claude o Gemini).
+                Debajo, añade el texto o apunte del tema que quieras trabajar.
               </p>
             </div>
 
@@ -93,10 +94,10 @@ export default function InstruccionesIaPage() {
               <span className="grid size-8 place-items-center rounded-xl bg-surface-2 font-mono text-sm font-bold text-ink">
                 2
               </span>
-              <h3 className="font-bold text-ink">Obtén el archivo CSV</h3>
+              <h3 className="font-bold text-ink">Copia el CSV generado</h3>
               <p className="text-sm text-ink-3">
-                La IA extraerá de 12 a 20 conceptos y redactará pistas pedagógicas concisas, devolviéndote un bloque CSV
-                perfectamente formateado.
+                La IA extraerá entre 12 y 20 conceptos y sus pistas didácticas, entregándote un bloque de texto en formato
+                CSV listo para copiar.
               </p>
             </div>
 
@@ -104,10 +105,10 @@ export default function InstruccionesIaPage() {
               <span className="grid size-8 place-items-center rounded-xl bg-surface-2 font-mono text-sm font-bold text-ink">
                 3
               </span>
-              <h3 className="font-bold text-ink">Genera tu Pack en GenAct</h3>
+              <h3 className="font-bold text-ink">Pégalo en GenAct</h3>
               <p className="text-sm text-ink-3">
-                Pega o sube el CSV en la web. El sistema construirá automáticamente todas las fichas del tema listas para
-                imprimir en PDF.
+                Vuelve a GenAct y pega el texto del CSV en <strong>«Crear Pack Temático»</strong>. El sistema construirá
+                todas las fichas del tema listas para imprimir en PDF.
               </p>
             </div>
           </div>
@@ -131,7 +132,7 @@ export default function InstruccionesIaPage() {
           </div>
 
           <p className="text-sm text-ink-3">
-            El siguiente bloque contiene las reglas que cualquier agente o chat de IA interpretará cuando lea esta página:
+            El siguiente bloque contiene el prompt completo listo para copiar. Pégalo en ChatGPT, Claude o Gemini junto con tus textos o apuntes para obtener tu CSV al instante:
           </p>
 
           <div className="relative rounded-2xl border border-line-strong bg-surface-2/60 p-4 sm:p-6 font-mono text-xs sm:text-sm text-ink leading-relaxed overflow-x-auto whitespace-pre-wrap">
