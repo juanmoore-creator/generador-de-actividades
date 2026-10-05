@@ -186,7 +186,7 @@ export default function InstruccionesIaPage() {
               </summary>
               <p className="mt-2 text-ink-3 leading-relaxed">
                 El sistema de GenAct sanitiza automáticamente las palabras removiendo espacios y tildes para que encajen en
-                las cuadrículas (por ejemplo, <em>"CÉLULA ANIMAL"</em> se normaliza a <em>"CELULAANIMAL"</em>). No obstante, es
+                las cuadrículas (por ejemplo, <em>&quot;CÉLULA ANIMAL&quot;</em> se normaliza a <em>&quot;CELULAANIMAL&quot;</em>). No obstante, es
                 preferible que la IA entregue términos simples de una sola palabra.
               </p>
             </details>

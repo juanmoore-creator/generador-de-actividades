@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Check, Copy, Download, ArrowRight } from "lucide-react";
 
 interface PromptActionsProps {
@@ -10,23 +11,12 @@ interface PromptActionsProps {
 
 export function PromptActions({ promptText, sampleCsv }: PromptActionsProps) {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
-  const [copiedCsv, setCopiedCsv] = useState(false);
 
   const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(promptText);
       setCopiedPrompt(true);
       setTimeout(() => setCopiedPrompt(false), 2500);
-    } catch {
-      // Fallback
-    }
-  };
-
-  const handleCopyCsv = async () => {
-    try {
-      await navigator.clipboard.writeText(sampleCsv);
-      setCopiedCsv(true);
-      setTimeout(() => setCopiedCsv(false), 2500);
     } catch {
       // Fallback
     }
@@ -73,13 +63,13 @@ export function PromptActions({ promptText, sampleCsv }: PromptActionsProps) {
         <span>Descargar CSV de ejemplo</span>
       </button>
 
-      <a
+      <Link
         href="/"
         className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 shadow-xs transition-colors hover:bg-surface-2 hover:text-ink active:scale-[0.98]"
       >
         <span>Ir a GenAct</span>
         <ArrowRight className="size-4" aria-hidden />
-      </a>
+      </Link>
     </div>
   );
 }

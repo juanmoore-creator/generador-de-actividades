@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { FolderOpen, House, LogIn, PenLine, Settings, Users, Cloud, HardDrive } from "lucide-react";
 import { useDataState } from "@/lib/data/store";
 import { Button } from "@/components/ui/Button";
@@ -23,9 +24,14 @@ export function TopBar() {
     <header className="no-print sticky top-0 z-40 border-b border-line bg-surface/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <button type="button" onClick={() => navigate("home")} className="flex items-center gap-2.5 rounded-xl cursor-pointer" aria-label="GenAct, ir al inicio">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary font-mono text-sm font-bold text-on-primary" aria-hidden>
-            GA
-          </span>
+          <Image
+            src="/icons/icon-192.png"
+            alt="GenAct"
+            width={36}
+            height={36}
+            className="size-9 rounded-xl object-contain shadow-xs"
+            priority
+          />
           <span className="font-heading text-lg font-bold text-ink">GenAct</span>
         </button>
 
