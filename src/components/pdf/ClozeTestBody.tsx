@@ -82,7 +82,7 @@ export const ClozeTestBody = ({ result, showSolution = false }: Props) => {
     <>
         {/* Word Bank Box */}
         {!showSolution && result.wordBank.length > 0 && (
-          <View style={styles.wordBankCard}>
+          <View style={styles.wordBankCard} wrap={false}>
             <Text style={styles.wordBankTitle}>Banco de palabras</Text>
             <View style={styles.wordBankTags}>
               {result.wordBank.map((w, idx) => (
@@ -112,7 +112,7 @@ export const ClozeTestBody = ({ result, showSolution = false }: Props) => {
         </Text>
 
         {showSolution && (
-          <View style={styles.solutionsSummary}>
+          <View style={styles.solutionsSummary} wrap={false}>
             <Text style={styles.solTitle}>Respuestas</Text>
             <Text style={styles.solItems}>
               {result.solutions

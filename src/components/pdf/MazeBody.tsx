@@ -50,7 +50,7 @@ export const MazeBody = ({ result, showSolution = false }: Props) => {
 
   return (
     <>
-        <View style={styles.mazeWrapper}>
+        <View style={styles.mazeWrapper} wrap={false}>
           <View style={[styles.labelsRow, { width: cellSize * result.width }]}>
             <Text style={styles.startLabel}>ENTRADA</Text>
           </View>

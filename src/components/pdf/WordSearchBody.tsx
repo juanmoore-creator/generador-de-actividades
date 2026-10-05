@@ -50,7 +50,7 @@ export const WordSearchBody = ({ result, showSolution = false }: Props) => {
 
   return (
     <>
-        <View style={styles.grid}>
+        <View style={styles.grid} wrap={false}>
           {result.grid.map((row, y) => (
             <View key={y} style={styles.row}>
               {row.map((char, x) => {
@@ -86,7 +86,7 @@ export const WordSearchBody = ({ result, showSolution = false }: Props) => {
           ))}
         </View>
 
-        <View style={styles.wordsSection}>
+        <View style={styles.wordsSection} wrap={false}>
           <Text style={styles.sectionTitle}>
             Palabras a encontrar ({result.placedWords.length}):
           </Text>

@@ -24,7 +24,7 @@ export const SudokuBody = ({ result, showSolution = false }: Props) => {
 
   return (
     <>
-      <View style={styles.gridContainer}>
+      <View style={styles.gridContainer} wrap={false}>
         {Array.from({ length: result.size }, (_, r) => (
           <View key={r} style={styles.row}>
             {Array.from({ length: result.size }, (_, c) => {

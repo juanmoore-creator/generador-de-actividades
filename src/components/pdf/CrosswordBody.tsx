@@ -42,7 +42,7 @@ export const CrosswordBody = ({ result, showSolution = false }: Props) => {
 
   return (
     <>
-        <View style={styles.grid}>
+        <View style={styles.grid} wrap={false}>
           {result.grid.map((row, y) => (
             <View key={y} style={styles.row}>
               {row.map((cell, x) => {
@@ -108,24 +108,24 @@ export const CrosswordBody = ({ result, showSolution = false }: Props) => {
 
         <View style={styles.cluesSection}>
           <View style={styles.clueColumn}>
-            <Text style={styles.clueTitle}>Horizontales ({horizontal.length})</Text>
+            <Text style={styles.clueTitle} wrap={false}>Horizontales ({horizontal.length})</Text>
             {horizontal.length === 0 ? (
               <Text style={styles.clueText}>Ninguna</Text>
             ) : (
               horizontal.map((w) => (
-                <Text key={w.number} style={styles.clueText}>
+                <Text key={w.number} style={styles.clueText} wrap={false}>
                   {w.number}. {w.clue || `Palabra de ${w.word.length} letras`}
                 </Text>
               ))
             )}
           </View>
           <View style={styles.clueColumn}>
-            <Text style={styles.clueTitle}>Verticales ({vertical.length})</Text>
+            <Text style={styles.clueTitle} wrap={false}>Verticales ({vertical.length})</Text>
             {vertical.length === 0 ? (
               <Text style={styles.clueText}>Ninguna</Text>
             ) : (
               vertical.map((w) => (
-                <Text key={w.number} style={styles.clueText}>
+                <Text key={w.number} style={styles.clueText} wrap={false}>
                   {w.number}. {w.clue || `Palabra de ${w.word.length} letras`}
                 </Text>
               ))

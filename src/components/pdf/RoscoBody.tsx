@@ -103,7 +103,7 @@ export const RoscoBody = ({ result, showSolution = false }: Props) => {
   return (
     <>
         {/* Circular Alphabet Strip */}
-        <View style={styles.alphabetStrip}>
+        <View style={styles.alphabetStrip} wrap={false}>
           {result.items.map((item) => (
             <View key={item.letter} style={styles.letterBubble}>
               <Text style={styles.letterBubbleText}>{item.letter}</Text>
@@ -115,7 +115,7 @@ export const RoscoBody = ({ result, showSolution = false }: Props) => {
         <View style={styles.columns}>
           <View style={styles.column}>
             {leftCol.map((item) => (
-              <View key={item.letter} style={styles.clueCard}>
+              <View key={item.letter} style={styles.clueCard} wrap={false}>
                 <View style={styles.cardHeader}>
                   <View style={styles.letterBadge}>
                     <Text style={styles.letterBadgeText}>{item.letter}</Text>
@@ -136,7 +136,7 @@ export const RoscoBody = ({ result, showSolution = false }: Props) => {
 
           <View style={styles.column}>
             {rightCol.map((item) => (
-              <View key={item.letter} style={styles.clueCard}>
+              <View key={item.letter} style={styles.clueCard} wrap={false}>
                 <View style={styles.cardHeader}>
                   <View style={styles.letterBadge}>
                     <Text style={styles.letterBadgeText}>{item.letter}</Text>

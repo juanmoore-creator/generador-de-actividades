@@ -80,9 +80,13 @@ export function createThemePack({
         cryptoHint: `Pista del tema ${cleanTitle}: ${phraseItem?.clue || cleanTitle}`,
       };
     } else if (type === "matching") {
-      // For matching, items with clues are required
+      // For matching, items with clues are required; cap at 10 for clean single-page printing
       const withClues = cleanItems.filter((i) => i.clue.length > 0);
-      snapshotOverrides.items = withClues.length >= 3 ? withClues : cleanItems;
+      const candidates = withClues.length >= 3 ? withClues : cleanItems;
+      snapshotOverrides.items = candidates.slice(0, 10);
+    } else if (type === "scramble") {
+      // Cap at 12 items for clean single-page printing
+      snapshotOverrides.items = cleanItems.slice(0, 12);
     } else if (type === "bingo") {
       snapshotOverrides.bingoSize = cleanItems.length >= 16 ? 4 : 3;
     }

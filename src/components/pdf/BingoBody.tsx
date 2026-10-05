@@ -57,7 +57,7 @@ export const BingoBody = ({ result, showSolution = false }: Props) => {
   const fontSize = Math.max(8, Math.min(18, Math.floor((cellSize * 1.5) / longest), cellSize / 4));
 
   return (
-    <View style={styles.cardWrap}>
+    <View style={styles.cardWrap} wrap={false}>
       {result.size === 5 && (
         <View style={styles.bingoTitle}>
           {"BINGO".split("").map((l) => (

@@ -3,28 +3,34 @@ import { Text, View, StyleSheet } from "@react-pdf/renderer";
 import { MatchingResult } from "@/lib/types/activities";
 
 const styles = StyleSheet.create({
-  columnsContainer: {
+  container: {
+    display: "flex",
+    flexDirection: "column",
+    marginBottom: 16,
+  },
+  headerRow: {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  column: {
-    width: "46%",
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
+    marginBottom: 8,
   },
   colHeader: {
-    fontSize: 12,
+    width: "47%",
+    fontSize: 11,
     fontWeight: "bold",
     color: "#334155",
     borderBottomWidth: 1.5,
     borderBottomColor: "#94a3b8",
-    paddingBottom: 4,
-    marginBottom: 6,
+    paddingBottom: 3,
   },
-  itemRow: {
+  pairRow: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "stretch",
+  },
+  card: {
+    width: "47%",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -32,54 +38,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2e8f0",
     borderRadius: 6,
-    padding: 8,
-    minHeight: 38,
   },
   badge: {
-    width: 20,
-    height: 20,
     borderRadius: 10,
     backgroundColor: "#f1f5f9",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 8,
   },
   badgeText: {
-    fontSize: 9,
     fontWeight: "bold",
     color: "#475569",
   },
   itemText: {
-    fontSize: 10.5,
     color: "#0f172a",
     flex: 1,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: "#cbd5e1",
-    marginLeft: 6,
   },
   solutionsBox: {
-    marginTop: 16,
-    padding: 12,
+    marginTop: 14,
+    padding: 10,
     borderWidth: 1,
     borderColor: "#fecaca",
     backgroundColor: "#fff1f2",
     borderRadius: 6,
   },
   solTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "bold",
     color: "#dc2626",
-    marginBottom: 6,
+    marginBottom: 5,
   },
   solRow: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#991b1b",
-    marginBottom: 3,
+    marginBottom: 2.5,
   },
 });
 
@@ -89,48 +87,108 @@ interface Props {
 }
 
 export const MatchingBody = ({ result, showSolution = false }: Props) => {
+  const count = result.pairs.length;
+  // Adaptive density: scale down padding and fonts when many items exist
+  const isCompact = count > 8;
+  const isDense = count > 12;
+
+  const cardPadding = isDense ? 4 : isCompact ? 5 : 7;
+  const rowMarginBottom = isDense ? 5 : isCompact ? 7 : 10;
+  const fontSize = isDense ? 8.5 : isCompact ? 9.5 : 10.5;
+  const badgeSize = isDense ? 16 : isCompact ? 18 : 20;
+  const badgeFontSize = isDense ? 7.5 : isCompact ? 8.5 : 9;
+  const minHeight = isDense ? 26 : isCompact ? 30 : 36;
+
   return (
-    <>
-        <View style={styles.columnsContainer}>
-          {/* Left Column */}
-          <View style={styles.column}>
-            <Text style={styles.colHeader}>Columna A</Text>
-            {result.pairs.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{item.id}</Text>
-                </View>
-                <Text style={styles.itemText}>{item.leftText}</Text>
-                <View style={styles.dot} />
-              </View>
-            ))}
-          </View>
+    <View style={styles.container}>
+      {/* Header Row */}
+      <View style={styles.headerRow} wrap={false}>
+        <Text style={styles.colHeader}>Columna A</Text>
+        <Text style={styles.colHeader}>Columna B</Text>
+      </View>
 
-          {/* Right Column */}
-          <View style={styles.column}>
-            <Text style={styles.colHeader}>Columna B</Text>
-            {result.shuffledRight.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <View style={styles.dot} />
-                <View style={[styles.badge, { marginLeft: 6 }]}>
-                  <Text style={styles.badgeText}>{item.label}</Text>
-                </View>
-                <Text style={styles.itemText}>{item.text}</Text>
+      {/* Synchronized Pair Rows - wrap={false} prevents any box from being sliced */}
+      {result.pairs.map((leftItem, index) => {
+        const rightItem = result.shuffledRight[index];
+        return (
+          <View
+            key={leftItem.id}
+            style={[styles.pairRow, { marginBottom: rowMarginBottom }]}
+            wrap={false}
+          >
+            {/* Left Column Card */}
+            <View
+              style={[
+                styles.card,
+                {
+                  padding: cardPadding,
+                  minHeight,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    width: badgeSize,
+                    height: badgeSize,
+                    marginRight: isCompact ? 5 : 8,
+                  },
+                ]}
+              >
+                <Text style={[styles.badgeText, { fontSize: badgeFontSize }]}>
+                  {leftItem.id}
+                </Text>
               </View>
-            ))}
-          </View>
-        </View>
-
-        {showSolution && (
-          <View style={styles.solutionsBox}>
-            <Text style={styles.solTitle}>Respuestas Correctas:</Text>
-            {result.solutions.map((sol) => (
-              <Text key={sol.leftId} style={styles.solRow}>
-                {sol.leftId} - {sol.rightLabel}: {sol.text}
+              <Text style={[styles.itemText, { fontSize }]}>
+                {leftItem.leftText}
               </Text>
-            ))}
+              <View style={[styles.dot, { marginLeft: 5 }]} />
+            </View>
+
+            {/* Right Column Card */}
+            <View
+              style={[
+                styles.card,
+                {
+                  padding: cardPadding,
+                  minHeight,
+                },
+              ]}
+            >
+              <View style={[styles.dot, { marginRight: 5 }]} />
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    width: badgeSize,
+                    height: badgeSize,
+                    marginRight: isCompact ? 5 : 8,
+                  },
+                ]}
+              >
+                <Text style={[styles.badgeText, { fontSize: badgeFontSize }]}>
+                  {rightItem ? rightItem.label : ""}
+                </Text>
+              </View>
+              <Text style={[styles.itemText, { fontSize }]}>
+                {rightItem ? rightItem.text : ""}
+              </Text>
+            </View>
           </View>
-        )}
-    </>
+        );
+      })}
+
+      {showSolution && (
+        <View style={styles.solutionsBox} wrap={false}>
+          <Text style={styles.solTitle}>Respuestas Correctas:</Text>
+          {result.solutions.map((sol) => (
+            <Text key={sol.leftId} style={styles.solRow}>
+              {sol.leftId} - {sol.rightLabel}: {sol.text}
+            </Text>
+          ))}
+        </View>
+      )}
+    </View>
   );
 };

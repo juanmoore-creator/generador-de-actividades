@@ -114,7 +114,7 @@ export const CryptogramBody = ({ result, showSolution = false }: Props) => {
         {result.hint ? <Text style={styles.instruction}>Pista: {result.hint}</Text> : null}
 
         {/* Decoder Key Table */}
-        <View style={styles.keyTable}>
+        <View style={styles.keyTable} wrap={false}>
           {result.cipherKey.map((k) => (
             <View key={k.letter} style={styles.keyCell}>
               <Text style={styles.keyLetter}>{k.letter}</Text>
@@ -126,7 +126,7 @@ export const CryptogramBody = ({ result, showSolution = false }: Props) => {
         {/* Coded Message */}
         <View style={styles.messageContainer}>
           {result.words.map((word, wIdx) => (
-            <View key={wIdx} style={styles.wordContainer}>
+            <View key={wIdx} style={styles.wordContainer} wrap={false}>
               {word.map((char, cIdx) => {
                 if (!char.isLetter) {
                   return (

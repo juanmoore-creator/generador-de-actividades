@@ -59,7 +59,7 @@ export const MathPyramidBody = ({ result, showSolution = false }: Props) => {
     <>
         <View style={styles.pyramidsContainer}>
           {result.pyramids.map((pyramid, pIdx) => (
-            <View key={pyramid.id} style={styles.pyramidCard}>
+            <View key={pyramid.id} style={styles.pyramidCard} wrap={false}>
               {result.pyramids.length > 1 && <Text style={styles.pyramidNumber}>{pIdx + 1}</Text>}
               {pyramid.grid.map((row, rIdx) => (
                 <View key={rIdx} style={styles.row}>

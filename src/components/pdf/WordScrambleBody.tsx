@@ -3,7 +3,7 @@ import { Text, View, StyleSheet } from "@react-pdf/renderer";
 import { WordScrambleResult } from "@/lib/types/activities";
 
 const styles = StyleSheet.create({
-  list: { display: "flex", flexDirection: "column", gap: 14 },
+  list: { display: "flex", flexDirection: "column" },
   row: {
     display: "flex",
     flexDirection: "row",
@@ -11,7 +11,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
-    paddingBottom: 10,
   },
   indexBadge: {
     width: 22,
@@ -24,7 +23,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   scrambledLetters: {
-    fontSize: 15,
     fontWeight: "bold",
     letterSpacing: 4,
     color: "#0f172a",
@@ -65,24 +63,35 @@ interface Props {
 }
 
 export const WordScrambleBody = ({ result, showSolution = false }: Props) => {
+  const isCompact = result.items.length > 8;
+  const isDense = result.items.length > 12;
+
+  const rowPadding = isDense ? 5 : isCompact ? 7 : 10;
+  const listGap = isDense ? 7 : isCompact ? 10 : 14;
+  const scrambledFontSize = isDense ? 12 : isCompact ? 13.5 : 15;
+
   return (
-    <>
-        <View style={styles.list}>
-          {result.items.map((item, idx) => (
-            <View key={idx} style={styles.row}>
-              <Text style={styles.indexBadge}>{(idx + 1).toString().padStart(2, "0")}.</Text>
-              <View style={styles.scrambledBox}>
-                <Text style={styles.scrambledLetters}>{item.scrambled}</Text>
-                {item.clue ? <Text style={styles.clueText}>{item.clue}</Text> : null}
-              </View>
-              <View style={styles.answerSection}>
-                <View style={styles.blankLine}>
-                  {showSolution && <Text style={styles.solutionText}>{item.original}</Text>}
-                </View>
-              </View>
+    <View style={[styles.list, { gap: listGap }]}>
+      {result.items.map((item, idx) => (
+        <View
+          key={idx}
+          style={[styles.row, { paddingBottom: rowPadding }]}
+          wrap={false}
+        >
+          <Text style={styles.indexBadge}>{(idx + 1).toString().padStart(2, "0")}.</Text>
+          <View style={styles.scrambledBox}>
+            <Text style={[styles.scrambledLetters, { fontSize: scrambledFontSize }]}>
+              {item.scrambled}
+            </Text>
+            {item.clue ? <Text style={styles.clueText}>{item.clue}</Text> : null}
+          </View>
+          <View style={styles.answerSection}>
+            <View style={styles.blankLine}>
+              {showSolution && <Text style={styles.solutionText}>{item.original}</Text>}
             </View>
-          ))}
+          </View>
         </View>
-    </>
+      ))}
+    </View>
   );
 };

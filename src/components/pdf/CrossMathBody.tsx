@@ -68,7 +68,7 @@ interface Props {
 export const CrossMathBody = ({ result, showSolution = false }: Props) => {
   return (
     <>
-        <View style={styles.gridContainer}>
+        <View style={styles.gridContainer} wrap={false}>
           {result.grid.map((row, r) => (
             <View key={r} style={styles.row}>
               {row.map((cell, c) => {

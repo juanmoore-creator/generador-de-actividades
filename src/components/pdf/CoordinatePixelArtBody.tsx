@@ -93,7 +93,7 @@ export const CoordinatePixelArtBody = ({ result, showSolution = false }: Props) 
 
   return (
     <>
-        <View style={styles.gridWrapper}>
+        <View style={styles.gridWrapper} wrap={false}>
           {/* Top Column Labels (A, B, C...) */}
           <View style={styles.row}>
             <View style={styles.sideHeaderCell} />
@@ -128,7 +128,7 @@ export const CoordinatePixelArtBody = ({ result, showSolution = false }: Props) 
         </View>
 
         {/* Color Instructions List */}
-        <View style={styles.instructionsCard}>
+        <View style={styles.instructionsCard} wrap={false}>
           <Text style={styles.instTitle}>Colores y coordenadas</Text>
           {result.instructions.map((inst) => (
             <View key={inst.colorCode} style={styles.colorGroup}>
