@@ -8,7 +8,7 @@ import { createSnapshot } from "@/lib/activities/snapshot";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { ActivityIcon, CATEGORY_TONE } from "@/components/app/ActivityIcon";
+import { ActivityIcon, CATEGORY_BORDER } from "@/components/app/ActivityIcon";
 import { useStudio } from "@/components/studio/StudioContext";
 import { useApp } from "@/components/app/AppContext";
 import { useDataState } from "@/lib/data/store";
@@ -24,7 +24,23 @@ interface Props {
 type CategoryFilter = ActivityCategory | "all";
 type LevelFilter = EducationLevel | "all";
 
-function FilterChip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+const CATEGORY_CHIP_ACTIVE: Record<ActivityCategory, string> = {
+  language: "border-sky-600 bg-sky-600 text-white dark:border-sky-500 dark:bg-sky-500 font-semibold shadow-xs",
+  math: "border-amber-600 bg-amber-600 text-white dark:border-amber-500 dark:bg-amber-500 font-semibold shadow-xs",
+  visual: "border-violet-600 bg-violet-600 text-white dark:border-violet-500 dark:bg-violet-500 font-semibold shadow-xs",
+};
+
+function FilterChip({
+  selected,
+  onClick,
+  activeClassName,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  activeClassName?: string;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -32,7 +48,9 @@ function FilterChip({ selected, onClick, children }: { selected: boolean; onClic
       onClick={onClick}
       className={cn(
         "h-10 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors cursor-pointer",
-        selected ? "border-primary bg-primary text-on-primary" : "border-line-strong bg-surface text-ink-2 hover:bg-surface-2"
+        selected
+          ? (activeClassName ?? "border-primary bg-primary text-on-primary font-semibold shadow-xs")
+          : "border-line-strong bg-surface text-ink-2 hover:bg-surface-2"
       )}
     >
       {children}
@@ -128,7 +146,7 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
           </Button>
         </Card>
         <Card className="flex items-center gap-4 p-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent-ink">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
             <FolderOpen className="size-6" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
@@ -168,7 +186,12 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
               Todas las áreas
             </FilterChip>
             {CATEGORIES.map((c) => (
-              <FilterChip key={c.id} selected={category === c.id} onClick={() => setCategory(c.id)}>
+              <FilterChip
+                key={c.id}
+                selected={category === c.id}
+                onClick={() => setCategory(c.id)}
+                activeClassName={CATEGORY_CHIP_ACTIVE[c.id]}
+              >
                 {c.short}
               </FilterChip>
             ))}
@@ -198,19 +221,22 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
                   <button
                     type="button"
                     onClick={() => onCreate(a.id)}
-                    className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left shadow-xs transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-md cursor-pointer motion-reduce:hover:translate-y-0"
+                    className={cn(
+                      "group flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-surface text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer motion-reduce:hover:translate-y-0",
+                      CATEGORY_BORDER[a.category]
+                    )}
                   >
                     <SheetThumbnail snapshot={thumbs[a.id]} />
                     <div className="flex flex-1 flex-col gap-2 p-4">
                       <div className="flex items-center gap-2.5">
                         <ActivityIcon type={a.id} size="sm" />
-                        <h3 className="font-bold text-ink group-hover:text-accent-ink">{a.title}</h3>
+                        <h3 className="font-bold text-ink group-hover:text-primary transition-colors">{a.title}</h3>
                       </div>
                       <p className="text-sm text-ink-3">{a.description}</p>
                       <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-                        <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", CATEGORY_TONE[a.category])}>
+                        <Badge tone={a.category}>
                           {cat.short}
-                        </span>
+                        </Badge>
                         {a.levels.map((l) => (
                           <Badge key={l}>{LEVELS.find((x) => x.id === l)!.label}</Badge>
                         ))}

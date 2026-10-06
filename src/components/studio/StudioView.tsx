@@ -105,10 +105,10 @@ export function StudioView() {
                 onClick={() => setStep(id)}
                 className={cn(
                   "flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer",
-                  step === id ? "bg-primary text-on-primary" : "text-ink-2 hover:bg-surface-2"
+                  step === id ? "bg-primary text-on-primary shadow-xs" : "text-ink-2 hover:bg-surface-2"
                 )}
               >
-                <span className={cn("grid size-5 place-items-center rounded-full font-mono text-xs", step === id ? "bg-on-primary/20" : "bg-surface-3")}>
+                <span className={cn("grid size-5 place-items-center rounded-full font-mono text-xs", step === id ? "bg-on-primary/25" : "bg-surface-3")}>
                   {i + 1}
                 </span>
                 {STEP_LABELS[id]}

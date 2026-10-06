@@ -36,24 +36,36 @@ export function TopBar() {
         </button>
 
         <nav aria-label="Principal" className="ml-4 hidden flex-1 items-center gap-1 lg:flex">
-          {NAV.filter((n) => n.id !== "profile").map((n) => (
-            <button
-              key={n.id}
-              type="button"
-              aria-current={tab === n.id ? "page" : undefined}
-              onClick={() => navigate(n.id)}
-              className={cn(
-                "flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold transition-colors cursor-pointer",
-                tab === n.id ? "bg-surface-2 text-ink" : "text-ink-3 hover:bg-surface-2 hover:text-ink"
-              )}
-            >
-              <n.icon className="size-4" aria-hidden />
-              {n.label}
-              {n.id === "saved" && saved.length > 0 && (
-                <span className="rounded-full bg-surface-3 px-1.5 text-xs text-ink-2">{saved.length}</span>
-              )}
-            </button>
-          ))}
+          {NAV.filter((n) => n.id !== "profile").map((n) => {
+            const active = tab === n.id;
+            return (
+              <button
+                key={n.id}
+                type="button"
+                aria-current={active ? "page" : undefined}
+                onClick={() => navigate(n.id)}
+                className={cn(
+                  "flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold transition-colors cursor-pointer",
+                  active
+                    ? "bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary-hover"
+                    : "text-ink-3 hover:bg-surface-2 hover:text-ink"
+                )}
+              >
+                <n.icon className="size-4" aria-hidden />
+                {n.label}
+                {n.id === "saved" && saved.length > 0 && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 text-xs",
+                      active ? "bg-primary/20 text-primary font-semibold" : "bg-surface-3 text-ink-2"
+                    )}
+                  >
+                    {saved.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -61,6 +73,13 @@ export function TopBar() {
             className="hidden items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-ink-3 sm:flex"
             title={mode === "local" ? "Los datos se guardan en este dispositivo" : "Los datos se guardan en tu cuenta"}
           >
+            <span
+              className={cn(
+                "size-1.5 rounded-full",
+                mode === "cloud" ? "bg-emerald-500" : "bg-slate-400 dark:bg-slate-500"
+              )}
+              aria-hidden
+            />
             {mode === "local" ? <HardDrive className="size-3.5" aria-hidden /> : <Cloud className="size-3.5" aria-hidden />}
             {mode === "local" ? "En este dispositivo" : "En la nube"}
           </span>
@@ -101,9 +120,17 @@ export function BottomNav() {
                 type="button"
                 aria-current={active ? "page" : undefined}
                 onClick={() => navigate(n.id)}
-                className={cn("flex h-full w-full flex-col items-center justify-center gap-1 text-xs font-medium cursor-pointer", active ? "text-accent-ink" : "text-ink-3")}
+                className={cn(
+                  "flex h-full w-full flex-col items-center justify-center gap-1 text-xs cursor-pointer",
+                  active ? "text-primary font-bold" : "text-ink-3 font-medium"
+                )}
               >
-                <span className={cn("grid h-7 w-12 place-items-center rounded-full transition-colors", active && "bg-accent-soft")}>
+                <span
+                  className={cn(
+                    "grid h-7 w-12 place-items-center rounded-full transition-colors",
+                    active && "bg-primary/10 text-primary dark:bg-primary/20"
+                  )}
+                >
                   <n.icon className="size-5" aria-hidden />
                 </span>
                 {n.label}

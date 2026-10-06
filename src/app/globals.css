@@ -50,8 +50,8 @@
   --c-ink-3: #5b6b82;
   --c-line: #e2e8f0;
   --c-line-strong: #cbd5e1;
-  --c-primary: #0f172a;
-  --c-primary-hover: #1e293b;
+  --c-primary: #4f46e5;
+  --c-primary-hover: #4338ca;
   --c-on-primary: #ffffff;
   --c-accent: #2563eb;
   --c-accent-soft: #eff6ff;
@@ -77,9 +77,9 @@
   --c-ink-3: #9aa8bd;
   --c-line: #243049;
   --c-line-strong: #34425e;
-  --c-primary: #f1f5f9;
-  --c-primary-hover: #dbe3ee;
-  --c-on-primary: #0f172a;
+  --c-primary: #6366f1;
+  --c-primary-hover: #818cf8;
+  --c-on-primary: #ffffff;
   --c-accent: #60a5fa;
   --c-accent-soft: rgba(59, 130, 246, 0.16);
   --c-accent-ink: #93c5fd;
@@ -127,7 +127,7 @@ h6,
 
 /* Fondo punteado de la mesa de trabajo. */
 .canvas-grid {
-  background-image: radial-gradient(color-mix(in srgb, var(--c-ink-3) 30%, transparent) 1px, transparent 1px);
+  background-image: radial-gradient(color-mix(in srgb, var(--c-ink-3) 24%, transparent) 1.2px, transparent 1.2px);
   background-size: 20px 20px;
 }
 
