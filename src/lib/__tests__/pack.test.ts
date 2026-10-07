@@ -47,4 +47,37 @@ describe("createThemePack", () => {
     expect(pack.items[0].word).toBe("ATOMO");
     expect(pack.items[1].word).toBe("ELECTRON");
   });
+
+  it("supports cloze and cryptogram with custom clozeText, cryptoPhrase, and cryptoHint", () => {
+    const pack = createThemePack({
+      themeTitle: "El Sistema Solar",
+      items: sampleItems,
+      activityTypes: ["cryptogram", "cloze"],
+      clozeText: "El [Sol] es el centro de nuestro sistema. La [Tierra] gira a su alrededor.",
+      cryptoPhrase: "EL SOL ES UNA ESTRELLA BRILLANTE",
+      cryptoHint: "Pista sobre el centro de nuestro sistema",
+    });
+
+    expect(pack.activities).toHaveLength(2);
+
+    const cryptoAct = pack.activities.find((a) => a.type === "cryptogram");
+    expect(cryptoAct).toBeDefined();
+    expect(cryptoAct?.snapshot.cryptoPhrase).toBe("EL SOL ES UNA ESTRELLA BRILLANTE");
+    expect(cryptoAct?.snapshot.cryptoHint).toBe("Pista sobre el centro de nuestro sistema");
+
+    const clozeAct = pack.activities.find((a) => a.type === "cloze");
+    expect(clozeAct).toBeDefined();
+    expect(clozeAct?.snapshot.clozeText).toBe(
+      "El [Sol] es el centro de nuestro sistema. La [Tierra] gira a su alrededor."
+    );
+
+    // Verify engines can execute both generated snapshots
+    const genCrypto = generateActivity(cryptoAct!.snapshot);
+    expect(genCrypto.type).toBe("cryptogram");
+    expect(genCrypto.result).toBeDefined();
+
+    const genCloze = generateActivity(clozeAct!.snapshot);
+    expect(genCloze.type).toBe("cloze");
+    expect(genCloze.result).toBeDefined();
+  });
 });

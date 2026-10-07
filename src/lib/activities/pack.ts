@@ -11,10 +11,23 @@ export const DEFAULT_PACK_ACTIVITIES: ActivityType[] = [
   "matching",
 ];
 
+export const ALL_PACK_ACTIVITIES: ActivityType[] = [
+  "wordsearch",
+  "crossword",
+  "scramble",
+  "matching",
+  "cryptogram",
+  "cloze",
+  "bingo",
+];
+
 export interface ThemePackOptions {
   themeTitle: string;
   items: WordItem[];
   activityTypes?: ActivityType[];
+  clozeText?: string;
+  cryptoPhrase?: string;
+  cryptoHint?: string;
 }
 
 export interface GeneratedPackItem {
@@ -36,6 +49,9 @@ export function createThemePack({
   themeTitle,
   items,
   activityTypes = DEFAULT_PACK_ACTIVITIES,
+  clozeText,
+  cryptoPhrase,
+  cryptoHint,
 }: ThemePackOptions): ThemePackResult {
   const cleanTitle = themeTitle.trim() || "Actividades Temáticas";
 
@@ -71,14 +87,26 @@ export function createThemePack({
     };
 
     if (type === "cryptogram") {
-      // Pick first clue or a synthesized phrase based on theme
-      const phraseItem = cleanItems.find((i) => i.word.length >= 4) || cleanItems[0];
-      const cryptoPhrase = phraseItem ? `${phraseItem.word}` : cleanTitle.toUpperCase();
-      snapshotOverrides = {
-        ...snapshotOverrides,
-        cryptoPhrase,
-        cryptoHint: `Pista del tema ${cleanTitle}: ${phraseItem?.clue || cleanTitle}`,
-      };
+      if (cryptoPhrase) {
+        snapshotOverrides = {
+          ...snapshotOverrides,
+          cryptoPhrase: cryptoPhrase.trim(),
+          cryptoHint: cryptoHint ? cryptoHint.trim() : `Pista del tema ${cleanTitle}`,
+        };
+      } else {
+        // Pick first clue or a synthesized phrase based on theme
+        const phraseItem = cleanItems.find((i) => i.word.length >= 4) || cleanItems[0];
+        const phrase = phraseItem ? `${phraseItem.word}` : cleanTitle.toUpperCase();
+        snapshotOverrides = {
+          ...snapshotOverrides,
+          cryptoPhrase: phrase,
+          cryptoHint: `Pista del tema ${cleanTitle}: ${phraseItem?.clue || cleanTitle}`,
+        };
+      }
+    } else if (type === "cloze") {
+      if (clozeText) {
+        snapshotOverrides.clozeText = clozeText.trim();
+      }
     } else if (type === "matching") {
       // For matching, items with clues are required; cap at 10 for clean single-page printing
       const withClues = cleanItems.filter((i) => i.clue.length > 0);
