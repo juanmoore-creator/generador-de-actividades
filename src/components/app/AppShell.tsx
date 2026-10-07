@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ActivitySnapshot, ActivityType } from "@/lib/types/activities";
+import type { StudioPackContext } from "@/lib/studio/state";
 import { switchActivityType } from "@/lib/activities/snapshot";
 import { newSeed } from "@/lib/random";
 import { useDataState } from "@/lib/data/store";
@@ -90,6 +91,15 @@ function Shell() {
     [dispatch, navigate, toast]
   );
 
+  const openPackInStudio = useCallback(
+    (pack: StudioPackContext) => {
+      dispatch({ type: "loadPack", pack });
+      navigate("studio");
+      toast.show(`Cuadernillo "${pack.title}" abierto en el estudio (${pack.activities.length} actividades)`, { tone: "info" });
+    },
+    [dispatch, navigate, toast]
+  );
+
   const createActivity = useCallback(
     (type: ActivityType) => {
       // Nueva ficha: conserva las palabras y el encabezado del borrador, con las preferencias del perfil.
@@ -119,9 +129,10 @@ function Shell() {
       openPublish: (snap: ActivitySnapshot) => setPublishing(snap),
       openSave: () => setSaveOpen(true),
       openInStudio,
+      openPackInStudio,
       openThemePack: () => setThemePackOpen(true),
     }),
-    [tab, navigate, openInStudio]
+    [tab, navigate, openInStudio, openPackInStudio]
   );
 
   return (

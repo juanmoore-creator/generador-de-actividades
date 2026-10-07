@@ -28,4 +28,101 @@ describe("estado del estudio", () => {
     expect(s.dirty).toBe(false);
     expect(s.savedId).toBe("abc");
   });
+
+  describe("cuadernillo / packs en el estudio", () => {
+    const packMock = {
+      title: "Los Dinosaurios",
+      currentIndex: 0,
+      activities: [
+        {
+          type: "wordsearch" as const,
+          snapshot: createSnapshot("wordsearch", { title: "Sopa de letras: Dinosaurios" }),
+          savedId: null,
+        },
+        {
+          type: "crossword" as const,
+          snapshot: createSnapshot("crossword", { title: "Crucigrama: Dinosaurios" }),
+          savedId: "crossword-123",
+        },
+      ],
+    };
+
+    it("loadPack carga el pack y la actividad inicial", () => {
+      let s = initialStudioState();
+      s = studioReducer(s, { type: "loadPack", pack: packMock });
+
+      expect(s.pack).not.toBeNull();
+      expect(s.pack?.title).toBe("Los Dinosaurios");
+      expect(s.pack?.currentIndex).toBe(0);
+      expect(s.snapshot.type).toBe("wordsearch");
+      expect(s.snapshot.title).toBe("Sopa de letras: Dinosaurios");
+      expect(s.savedId).toBeNull();
+      expect(s.dirty).toBe(false);
+    });
+
+    it("sincroniza modificaciones al snapshot en la actividad actual del pack", () => {
+      let s = initialStudioState();
+      s = studioReducer(s, { type: "loadPack", pack: packMock });
+      s = studioReducer(s, { type: "patch", patch: { title: "Sopa Modificada" } });
+
+      expect(s.snapshot.title).toBe("Sopa Modificada");
+      expect(s.pack?.activities[0].snapshot.title).toBe("Sopa Modificada");
+      expect(s.dirty).toBe(true);
+
+      s = studioReducer(s, { type: "patchSheet", patch: { instructions: "Nuevas instrucciones" } });
+      expect(s.pack?.activities[0].snapshot.sheet.instructions).toBe("Nuevas instrucciones");
+    });
+
+    it("switchPackActivity cambia de actividad y conserva los cambios de la anterior al volver", () => {
+      let s = initialStudioState();
+      s = studioReducer(s, { type: "loadPack", pack: packMock });
+
+      // Modificamos la primera actividad
+      s = studioReducer(s, { type: "patch", patch: { title: "Sopa Editada" } });
+
+      // Cambiamos a la segunda actividad (crucigrama)
+      s = studioReducer(s, { type: "switchPackActivity", index: 1 });
+      expect(s.pack?.currentIndex).toBe(1);
+      expect(s.snapshot.type).toBe("crossword");
+      expect(s.snapshot.title).toBe("Crucigrama: Dinosaurios");
+      expect(s.savedId).toBe("crossword-123");
+      expect(s.dirty).toBe(false);
+
+      // Volvemos a la primera actividad
+      s = studioReducer(s, { type: "switchPackActivity", index: 0 });
+      expect(s.pack?.currentIndex).toBe(0);
+      expect(s.snapshot.type).toBe("wordsearch");
+      expect(s.snapshot.title).toBe("Sopa Editada");
+      expect(s.dirty).toBe(false);
+    });
+
+    it("markSaved actualiza savedId en el pack", () => {
+      let s = initialStudioState();
+      s = studioReducer(s, { type: "loadPack", pack: packMock });
+      s = studioReducer(s, { type: "markSaved", savedId: "saved-ws-999" });
+
+      expect(s.savedId).toBe("saved-ws-999");
+      expect(s.pack?.activities[0].savedId).toBe("saved-ws-999");
+    });
+
+    it("closePack elimina el contexto del pack pero conserva el snapshot actual", () => {
+      let s = initialStudioState();
+      s = studioReducer(s, { type: "loadPack", pack: packMock });
+      expect(s.pack).not.toBeNull();
+
+      s = studioReducer(s, { type: "closePack" });
+      expect(s.pack).toBeNull();
+      expect(s.snapshot.type).toBe("wordsearch");
+    });
+
+    it("load elimina el contexto del pack si se carga una ficha individual", () => {
+      let s = initialStudioState();
+      s = studioReducer(s, { type: "loadPack", pack: packMock });
+      expect(s.pack).not.toBeNull();
+
+      s = studioReducer(s, { type: "load", snapshot: createSnapshot("maze") });
+      expect(s.pack).toBeNull();
+      expect(s.snapshot.type).toBe("maze");
+    });
+  });
 });

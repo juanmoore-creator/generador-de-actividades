@@ -16,8 +16,9 @@ import {
   Share2,
   SlidersHorizontal,
   Undo2,
+  X,
 } from "lucide-react";
-import { ACTIVITIES, CATEGORIES } from "@/lib/activities/catalog";
+import { ACTIVITIES, CATEGORIES, getActivity } from "@/lib/activities/catalog";
 import type { ActivityType } from "@/lib/types/activities";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -26,6 +27,8 @@ import { Menu } from "@/components/ui/Menu";
 import { Segmented } from "@/components/ui/Segmented";
 import { ActivityIcon } from "@/components/app/ActivityIcon";
 import { useApp } from "@/components/app/AppContext";
+import { useToast } from "@/components/ui/Toast";
+import { downloadBlob, pdfFileName, renderPdfBlob } from "@/lib/pdf/export";
 import { ScaledSheet, Sheet } from "@/components/preview/SheetPreview";
 import { versionLabel } from "@/components/pdf/ActivityDocument";
 import { useStudio } from "./StudioContext";
@@ -35,6 +38,118 @@ import { cn } from "@/lib/utils";
 type StepId = "content" | "settings" | "sheet";
 
 const STEP_LABELS: Record<StepId, string> = { content: "Contenido", settings: "Ajustes", sheet: "Hoja" };
+
+function PackHeaderBar() {
+  const { state, dispatch } = useStudio();
+  const toast = useToast();
+  const [downloading, setDownloading] = useState(false);
+  const pack = state.pack;
+  if (!pack) return null;
+
+  const handleDownloadPack = async () => {
+    setDownloading(true);
+    try {
+      const jobs = pack.activities.map((a) => ({
+        snapshot: a.snapshot,
+        mode: "student" as const,
+      }));
+      const blob = await renderPdfBlob(jobs, pack.title);
+      downloadBlob(blob, pdfFileName(pack.title, "Cuadernillo"));
+      toast.show(`Cuadernillo "${pack.title}" descargado`, { tone: "info" });
+    } catch (e) {
+      console.error(e);
+      toast.show("No se pudo generar el PDF del cuadernillo", { tone: "error" });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <aside
+      aria-label="Cuadernillo de actividades"
+      className="mb-4 rounded-2xl border border-primary/25 bg-primary-soft/30 p-3 sm:p-4 shadow-xs"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-on-primary text-base shadow-xs" aria-hidden>
+            📚
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                Cuadernillo
+              </span>
+              <span className="inline-flex items-center rounded-full bg-surface border border-line px-2 py-0.5 text-xs font-medium text-ink-2">
+                Ficha {pack.currentIndex + 1} de {pack.activities.length}
+              </span>
+            </div>
+            <h2 className="truncate text-base font-bold text-ink">
+              {pack.title}
+            </h2>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            loading={downloading}
+            disabled={downloading}
+            onClick={handleDownloadPack}
+            icon={<Download className="size-4" aria-hidden />}
+          >
+            Descargar Cuadernillo ({pack.activities.length})
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => dispatch({ type: "closePack" })}
+            icon={<X className="size-4" aria-hidden />}
+            title="Cerrar cuadernillo"
+          >
+            Cerrar cuadernillo
+          </Button>
+        </div>
+      </div>
+
+      {/* Tira horizontal interactiva de actividades del cuadernillo */}
+      <div
+        role="tablist"
+        aria-label="Actividades del cuadernillo"
+        className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin"
+      >
+        {pack.activities.map((act, i) => {
+          const actMeta = getActivity(act.type);
+          const isActive = i === pack.currentIndex;
+          return (
+            <button
+              key={`${act.type}-${i}`}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => dispatch({ type: "switchPackActivity", index: i })}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
+                isActive
+                  ? "bg-primary text-on-primary border-primary shadow-xs ring-2 ring-primary/20"
+                  : "bg-surface text-ink-2 border-line hover:bg-surface-2 hover:text-ink hover:border-line-strong"
+              )}
+            >
+              <ActivityIcon
+                type={act.type}
+                size="sm"
+                className={cn("size-6 rounded-md", isActive && "ring-1 ring-on-primary/30")}
+              />
+              <span className="truncate max-w-44">
+                {i + 1}. {act.snapshot.title || actMeta.title}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
 
 export function StudioView() {
   const { meta, snapshot, issues, state } = useStudio();
@@ -53,6 +168,8 @@ export function StudioView() {
 
   return (
     <div className="pb-36 lg:pb-0">
+      {state.pack && <PackHeaderBar />}
+
       {/* Cabecera del estudio */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <ActivityIcon type={snapshot.type} size="lg" />

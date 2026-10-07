@@ -61,7 +61,7 @@ interface Props {
 }
 
 export function ThemePackModal({ open, onClose }: Props) {
-  const { openInStudio, openAuth } = useApp();
+  const { openInStudio, openPackInStudio, openAuth, navigate } = useApp();
   const { profile, mode } = useDataState();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -362,9 +362,18 @@ export function ThemePackModal({ open, onClose }: Props) {
   };
 
   const handleOpenStudio = (snapshot = createdPack?.activities[0]?.snapshot) => {
-    if (!snapshot) return;
-    openInStudio(snapshot);
-    handleClose();
+    if (createdPack) {
+      const initialIdx = snapshot ? createdPack.activities.findIndex((a) => a.snapshot === snapshot) : 0;
+      openPackInStudio({
+        title: createdPack.title,
+        activities: createdPack.activities.map((a) => ({ type: a.type, snapshot: a.snapshot })),
+        currentIndex: initialIdx >= 0 ? initialIdx : 0,
+      });
+      handleClose();
+    } else if (snapshot) {
+      openInStudio(snapshot);
+      handleClose();
+    }
   };
 
   const handleSavePack = async () => {
@@ -443,18 +452,29 @@ export function ThemePackModal({ open, onClose }: Props) {
       }
       footer={
         createdPack ? (
-          <div className="flex items-center justify-between w-full">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setCreatedPack(null);
-                setPdfFile(null);
-                if (pdfInputRef.current) pdfInputRef.current.value = "";
-              }}
-              icon={<RotateCcw className="size-4" aria-hidden />}
-            >
-              Crear otro
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-2 w-full">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setCreatedPack(null);
+                  setPdfFile(null);
+                  if (pdfInputRef.current) pdfInputRef.current.value = "";
+                }}
+                icon={<RotateCcw className="size-4" aria-hidden />}
+              >
+                Crear otro
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  navigate("saved");
+                  handleClose();
+                }}
+              >
+                Ver en Mis fichas
+              </Button>
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="secondary" onClick={handleClose}>
                 Cerrar
@@ -464,7 +484,7 @@ export function ThemePackModal({ open, onClose }: Props) {
                 onClick={() => handleOpenStudio()}
                 icon={<ArrowRight className="size-4" aria-hidden />}
               >
-                Abrir en el Studio
+                Abrir Cuadernillo en el Studio
               </Button>
             </div>
           </div>
