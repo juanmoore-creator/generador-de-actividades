@@ -167,7 +167,7 @@ describe("gemini AI generator", () => {
       expect(result.themeTitle).toBe("La Célula");
       expect(result.vocabulary).toHaveLength(3);
       expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining("gemini-2.5-flash:generateContent"),
+        expect.stringContaining(":generateContent"),
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },

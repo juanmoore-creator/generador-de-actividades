@@ -192,6 +192,51 @@ export function sanitizeGeneratedActivities(raw: unknown): GeneratedActivitiesRe
   };
 }
 
+export async function getSupportedModels(apiKey: string): Promise<string[]> {
+  try {
+    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(listUrl);
+    if (res.ok) {
+      const data = await res.json();
+      const models = Array.isArray(data.models) ? data.models : [];
+      return models
+        .filter((m: { supportedGenerationMethods?: string[] }) =>
+          Array.isArray(m.supportedGenerationMethods) &&
+          m.supportedGenerationMethods.includes("generateContent")
+        )
+        .map((m: { name: string }) => m.name.replace(/^models\//, ""));
+    }
+  } catch (err) {
+    console.warn("Could not fetch models list from Gemini API:", err);
+  }
+  return [];
+}
+
+export async function resolveGeminiModel(apiKey: string): Promise<string[]> {
+  const preferred = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+  ];
+
+  const available = await getSupportedModels(apiKey);
+  if (available.length > 0) {
+    const matched = preferred.filter((p) => available.includes(p));
+    if (matched.length > 0) {
+      return matched;
+    }
+    const flashModels = available.filter((m) => m.includes("flash") && !m.includes("exp"));
+    if (flashModels.length > 0) {
+      return flashModels;
+    }
+    return available;
+  }
+
+  return preferred;
+}
+
 /**
  * Calls Google Gemini REST API directly using native fetch.
  * Generates vocabulary, cloze text, and cryptogram from text in a single roundtrip.
@@ -243,7 +288,7 @@ ${trimmedText}
 
 Genera el JSON estructurado respetando estrictamente el esquema indicado.`;
 
-  const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+  const candidateModels = await resolveGeminiModel(apiKey);
   let lastError: Error | null = null;
 
   for (const model of candidateModels) {
