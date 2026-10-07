@@ -59,18 +59,18 @@ export async function POST(request: Request) {
     if (error instanceof GeminiApiError) {
       if (error.status === 429) {
         return Response.json(
-          { error: "Límite de solicitudes alcanzado en Gemini. Espera un minuto e intenta de nuevo." },
+          { error: `Límite de cuota alcanzado en Gemini: ${error.message}` },
           { status: 429 }
         );
       }
       if (error.status === 400 || error.status === 401 || error.status === 403) {
         return Response.json(
-          { error: "La clave GEMINI_API_KEY no es válida o carece de permisos." },
+          { error: `Error de autenticación o solicitud en Gemini: ${error.message}` },
           { status: 401 }
         );
       }
       return Response.json(
-        { error: "El servicio de Gemini no está disponible en este momento." },
+        { error: `Error de Gemini (${error.status}): ${error.message}` },
         { status: 502 }
       );
     }

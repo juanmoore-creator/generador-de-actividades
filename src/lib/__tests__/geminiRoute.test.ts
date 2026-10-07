@@ -127,7 +127,7 @@ describe("generate-from-text API route", () => {
       const data = await res.json();
 
       expect(res.status).toBe(429);
-      expect(data.error).toContain("Límite de solicitudes alcanzado");
+      expect(data.error).toContain("Límite de cuota alcanzado");
     });
   });
 });

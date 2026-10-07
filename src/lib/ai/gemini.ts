@@ -243,49 +243,72 @@ ${trimmedText}
 
 Genera el JSON estructurado respetando estrictamente el esquema indicado.`;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+  let lastError: Error | null = null;
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      system_instruction: {
-        parts: [{ text: systemInstruction }],
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: userPrompt }],
+  for (const model of candidateModels) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: activitiesResponseSchema,
-      },
-    }),
-  });
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemInstruction }],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: userPrompt }],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: activitiesResponseSchema,
+          },
+        }),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    const message = errorData?.error?.message || `Error en la API de Gemini (${response.status})`;
-    throw new GeminiApiError(message, response.status);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorMsg = errorData?.error?.message || `HTTP ${response.status} ${response.statusText}`;
+        console.error(`Gemini API error with model ${model}:`, response.status, errorMsg);
+
+        // If model not found (404) or temporarily unavailable (503), try next model
+        if ((response.status === 404 || response.status === 503) && model !== candidateModels[candidateModels.length - 1]) {
+          lastError = new GeminiApiError(`${model}: ${errorMsg}`, response.status);
+          continue;
+        }
+
+        throw new GeminiApiError(errorMsg, response.status);
+      }
+
+      const data = await response.json();
+      const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawJson) {
+        throw new Error(`Gemini (${model}) no devolvió ninguna respuesta de texto.`);
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch (parseErr) {
+        console.error("Error parsing JSON from Gemini:", parseErr, rawJson);
+        throw new Error("No se pudo interpretar la respuesta generada por Gemini.");
+      }
+
+      return sanitizeGeneratedActivities(parsed);
+    } catch (err) {
+      if (err instanceof GeminiApiError && (err.status === 404 || err.status === 503)) {
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
   }
 
-  const data = await response.json();
-  const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) {
-    throw new Error("Gemini no devolvió ninguna respuesta de texto.");
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(rawJson);
-  } catch (parseErr) {
-    console.error("Error parsing JSON from Gemini:", parseErr, rawJson);
-    throw new Error("No se pudo interpretar la respuesta generada por Gemini.");
-  }
-
-  return sanitizeGeneratedActivities(parsed);
+  throw lastError || new Error("No se pudo conectar con los modelos de Gemini.");
 }
