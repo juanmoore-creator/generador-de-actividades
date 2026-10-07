@@ -33,11 +33,33 @@ export async function POST(request: Request) {
     return Response.json({ error: "Solicitud inválida." }, { status: 400 });
   }
 
-  const { text, level = "primaria", language = "español" } = body as Record<string, unknown>;
+  const {
+    text,
+    pdfBase64,
+    level = "primaria",
+    language = "español",
+  } = body as Record<string, unknown>;
 
-  if (typeof text !== "string" || text.trim().length < 30 || text.trim().length > 30000) {
+  const hasValidText = typeof text === "string" && text.trim().length >= 30;
+  const hasValidPdf = typeof pdfBase64 === "string" && pdfBase64.trim().length > 50;
+
+  if (!hasValidText && !hasValidPdf) {
     return Response.json(
-      { error: "El texto debe tener al menos 30 caracteres y un máximo de 30.000." },
+      { error: "Debes ingresar al menos 30 caracteres de texto o adjuntar un archivo PDF." },
+      { status: 400 }
+    );
+  }
+
+  if (typeof text === "string" && text.trim().length > 30000) {
+    return Response.json(
+      { error: "El texto no puede superar los 30.000 caracteres." },
+      { status: 400 }
+    );
+  }
+
+  if (typeof pdfBase64 === "string" && pdfBase64.length > 6 * 1024 * 1024) {
+    return Response.json(
+      { error: "El archivo PDF supera el tamaño máximo permitido (4 MB)." },
       { status: 400 }
     );
   }
@@ -47,7 +69,8 @@ export async function POST(request: Request) {
 
   try {
     const result = await generateActivitiesFromText({
-      text: text.trim(),
+      text: typeof text === "string" ? text.trim() : undefined,
+      pdfBase64: typeof pdfBase64 === "string" ? pdfBase64 : undefined,
       level: validLevel,
       language: validLanguage,
     });

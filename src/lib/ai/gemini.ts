@@ -1,7 +1,8 @@
 import { sanitizeSpanishWord } from "../generators/wordSearch";
 
 export interface GenerateActivitiesOptions {
-  text: string;
+  text?: string;
+  pdfBase64?: string;
   level?: string;
   language?: string;
 }
@@ -242,7 +243,8 @@ export async function resolveGeminiModel(apiKey: string): Promise<string[]> {
  * Generates vocabulary, cloze text, and cryptogram from text in a single roundtrip.
  */
 export async function generateActivitiesFromText({
-  text,
+  text = "",
+  pdfBase64,
   level = "primaria",
   language = "español",
 }: GenerateActivitiesOptions): Promise<GeneratedActivitiesResult> {
@@ -251,16 +253,21 @@ export async function generateActivitiesFromText({
     throw new Error("La API de Gemini no está configurada (GEMINI_API_KEY requerida).");
   }
 
-  const trimmedText = text.trim();
-  if (trimmedText.length < 30) {
-    throw new Error("El texto debe tener al menos 30 caracteres.");
+  const cleanPdfBase64 = pdfBase64
+    ? pdfBase64.replace(/^data:application\/pdf;base64,/, "").trim()
+    : undefined;
+
+  const trimmedText = (text || "").trim();
+
+  if (trimmedText.length < 30 && !cleanPdfBase64) {
+    throw new Error("Debes ingresar al menos 30 caracteres de texto o adjuntar un archivo PDF.");
   }
   if (trimmedText.length > 30000) {
     throw new Error("El texto no puede superar los 30.000 caracteres.");
   }
 
   const systemInstruction = `Eres un docente experto y pedagogo de habla hispana especializado en diseño de material didáctico imprimible.
-Analiza el texto pedagógico, resumen o apunte escolar provisto por el usuario y genera una estructura didáctica completa y coherente en formato JSON.
+Analiza el material pedagógico, resumen, apunte escolar o documento PDF adjunto provisto por el usuario y genera una estructura didáctica completa y coherente en formato JSON.
 
 Reglas obligatorias:
 1. "themeTitle": Título conciso, educativo y atractivo (máximo 60 caracteres).
@@ -280,13 +287,40 @@ Reglas obligatorias:
 Idioma: ${language}.
 Nivel educativo: ${level}.`;
 
-  const userPrompt = `A continuación se encuentra el texto de la lección escolar para generar las actividades:
+  let userPrompt: string;
+  if (cleanPdfBase64) {
+    if (trimmedText) {
+      userPrompt = `Se ha adjuntado un documento PDF con material pedagógico (apuntes, diapositivas, páginas escaneadas o figuras). Analiza exhaustivamente el contenido del archivo PDF y complementa con las siguientes notas o instrucciones del usuario:
+
+---
+${trimmedText}
+---
+
+Extrae los conceptos educativos principales y genera el JSON estructurado respetando estrictamente el esquema indicado.`;
+    } else {
+      userPrompt = `Se ha adjuntado un documento PDF con material pedagógico (apuntes, diapositivas, páginas escaneadas o figuras). Analiza exhaustivamente el contenido del archivo PDF para extraer los conceptos educativos clave y generar el JSON estructurado respetando estrictamente el esquema indicado.`;
+    }
+  } else {
+    userPrompt = `A continuación se encuentra el texto de la lección escolar para generar las actividades:
 
 ---
 ${trimmedText}
 ---
 
 Genera el JSON estructurado respetando estrictamente el esquema indicado.`;
+  }
+
+  const parts: Array<{ text?: string; inline_data?: { mime_type: string; data: string } }> = [
+    { text: userPrompt },
+  ];
+  if (cleanPdfBase64) {
+    parts.push({
+      inline_data: {
+        mime_type: "application/pdf",
+        data: cleanPdfBase64,
+      },
+    });
+  }
 
   const candidateModels = await resolveGeminiModel(apiKey);
   let lastError: Error | null = null;
@@ -307,7 +341,7 @@ Genera el JSON estructurado respetando estrictamente el esquema indicado.`;
           contents: [
             {
               role: "user",
-              parts: [{ text: userPrompt }],
+              parts,
             },
           ],
           generationConfig: {

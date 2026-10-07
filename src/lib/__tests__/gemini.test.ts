@@ -110,10 +110,18 @@ describe("gemini AI generator", () => {
   });
 
   describe("generateActivitiesFromText", () => {
-    it("validates minimum text length", async () => {
+    it("validates that either text (>= 30 chars) or pdfBase64 is provided", async () => {
       await expect(
         generateActivitiesFromText({ text: "Texto corto" })
-      ).rejects.toThrow("El texto debe tener al menos 30 caracteres.");
+      ).rejects.toThrow("Debes ingresar al menos 30 caracteres de texto o adjuntar un archivo PDF.");
+
+      await expect(
+        generateActivitiesFromText({})
+      ).rejects.toThrow("Debes ingresar al menos 30 caracteres de texto o adjuntar un archivo PDF.");
+
+      await expect(
+        generateActivitiesFromText({ text: "", pdfBase64: "" })
+      ).rejects.toThrow("Debes ingresar al menos 30 caracteres de texto o adjuntar un archivo PDF.");
     });
 
     it("throws when GEMINI_API_KEY is not set", async () => {
@@ -126,7 +134,7 @@ describe("gemini AI generator", () => {
       ).rejects.toThrow("La API de Gemini no está configurada");
     });
 
-    it("calls Gemini with structured schema and parses response", async () => {
+    it("calls Gemini with structured schema and does not include inline_data when no PDF is attached", async () => {
       const mockResultData = {
         themeTitle: "La Célula",
         summary: "Estructura y funcionamiento celular.",
@@ -173,6 +181,132 @@ describe("gemini AI generator", () => {
           headers: { "Content-Type": "application/json" },
         })
       );
+
+      const generateCall = fetchSpy.mock.calls.find((call) =>
+        String(call[0]).includes(":generateContent")
+      );
+      expect(generateCall).toBeDefined();
+      const parsedBody = JSON.parse(generateCall![1]?.body as string);
+      const parts = parsedBody.contents[0].parts;
+      expect(parts).toHaveLength(1);
+      expect(parts[0].text).toContain("A continuación se encuentra el texto");
+      expect(parts[0].inline_data).toBeUndefined();
+    });
+
+    it("includes inline_data in parts and strips data URL prefix when pdfBase64 is provided", async () => {
+      const mockResultData = {
+        themeTitle: "Fotosíntesis",
+        summary: "Proceso de síntesis vegetal.",
+        vocabulary: [
+          { word: "CLOROFILA", clue: "Pigmento verde" },
+          { word: "ESTOMA", clue: "Poro en las hojas" },
+          { word: "LUZ", clue: "Energía solar" },
+        ],
+        clozeParagraph: "Las plantas usan la [clorofila] para absorber [luz].",
+        cryptogram: {
+          phrase: "LAS PLANTAS GENERAN OXIGENO PARA EL PLANETA",
+          hint: "Importancia ecológica",
+        },
+      };
+
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify(mockResultData) }],
+              },
+            },
+          ],
+        }),
+      };
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse as unknown as Response);
+
+      const rawPdfBase64 = "data:application/pdf;base64,JVBERi0xLjQKJtestBase64Content";
+      const result = await generateActivitiesFromText({
+        pdfBase64: rawPdfBase64,
+        text: "Enfocar en fase luminosa",
+      });
+
+      expect(result.themeTitle).toBe("Fotosíntesis");
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(":generateContent"),
+        expect.any(Object)
+      );
+
+      const generateCall = fetchSpy.mock.calls.find((call) =>
+        String(call[0]).includes(":generateContent")
+      );
+      expect(generateCall).toBeDefined();
+      const parsedBody = JSON.parse(generateCall![1]?.body as string);
+      const parts = parsedBody.contents[0].parts;
+
+      expect(parts).toHaveLength(2);
+      expect(parts[0].text).toContain("Se ha adjuntado un documento PDF");
+      expect(parts[0].text).toContain("Enfocar en fase luminosa");
+      expect(parts[1]).toEqual({
+        inline_data: {
+          mime_type: "application/pdf",
+          data: "JVBERi0xLjQKJtestBase64Content",
+        },
+      });
+    });
+
+    it("generates activities from PDF alone when no text is provided", async () => {
+      const mockResultData = {
+        themeTitle: "Geometría",
+        summary: "Estudio de las figuras.",
+        vocabulary: [
+          { word: "TRIANGULO", clue: "Tres lados" },
+          { word: "CUADRADO", clue: "Cuatro lados" },
+          { word: "CIRCULO", clue: "Figura redonda" },
+        ],
+        clozeParagraph: "El [triángulo] tiene tres lados.",
+        cryptogram: {
+          phrase: "LAS MATEMATICAS ESTAN EN TODAS PARTES",
+          hint: "Geometría",
+        },
+      };
+
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify(mockResultData) }],
+              },
+            },
+          ],
+        }),
+      };
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse as unknown as Response);
+
+      const result = await generateActivitiesFromText({
+        pdfBase64: "JVBERi0xLjQKJalone",
+      });
+
+      expect(result.themeTitle).toBe("Geometría");
+      const generateCall = fetchSpy.mock.calls.find((call) =>
+        String(call[0]).includes(":generateContent")
+      );
+      expect(generateCall).toBeDefined();
+      const parsedBody = JSON.parse(generateCall![1]?.body as string);
+      const parts = parsedBody.contents[0].parts;
+
+      expect(parts).toHaveLength(2);
+      expect(parts[0].text).toContain("Se ha adjuntado un documento PDF");
+      expect(parts[1]).toEqual({
+        inline_data: {
+          mime_type: "application/pdf",
+          data: "JVBERi0xLjQKJalone",
+        },
+      });
     });
 
     it("throws GeminiApiError when API response is not ok", async () => {

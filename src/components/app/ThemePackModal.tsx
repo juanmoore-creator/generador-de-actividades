@@ -9,6 +9,7 @@ import {
   Copy,
   Download,
   FileSpreadsheet,
+  FileText,
   FileUp,
   HelpCircle,
   LogIn,
@@ -17,7 +18,14 @@ import {
   RotateCcw,
   Sparkles,
   Upload,
+  X,
 } from "lucide-react";
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 import type { ActivityType } from "@/lib/types/activities";
 import { parseThemeCsv } from "@/lib/csv/themePack";
 import { AI_SYSTEM_PROMPT } from "@/lib/csv/themePrompt";
@@ -57,6 +65,7 @@ export function ThemePackModal({ open, onClose }: Props) {
   const { profile, mode } = useDataState();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const canSaveToCloud = mode === "local" || !!profile;
 
@@ -67,6 +76,11 @@ export function ThemePackModal({ open, onClose }: Props) {
   const [aiLevel, setAiLevel] = useState<"inicial" | "primaria" | "secundaria">("primaria");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiEnabled, setAiEnabled] = useState<boolean | null>(null);
+  const [pdfFile, setPdfFile] = useState<{
+    name: string;
+    size: number;
+    base64: string;
+  } | null>(null);
 
   // CSV mode state
   const [csvText, setCsvText] = useState("");
@@ -159,17 +173,70 @@ export function ThemePackModal({ open, onClose }: Props) {
     );
   };
 
+  const handlePdfUpload = (file?: File) => {
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.show("Solo se permiten archivos en formato PDF.", { tone: "error" });
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      toast.show("El archivo PDF no debe superar los 4 MB para procesarse en Vercel.", {
+        tone: "error",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setPdfFile({
+          name: file.name,
+          size: file.size,
+          base64,
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePdfFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    handlePdfUpload(file);
+  };
+
+  const handlePdfDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    handlePdfUpload(file);
+  };
+
+  const handleClearPdf = () => {
+    setPdfFile(null);
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = "";
+    }
+  };
+
   const handleClose = () => {
     if (isCreating || aiLoading) return;
     setCreatedPack(null);
+    setPdfFile(null);
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = "";
+    }
     onClose();
   };
 
   // Generate activities with Gemini
   const handleGenerateAi = async () => {
     const trimmed = aiText.trim();
-    if (trimmed.length < 30) {
-      toast.show("El texto debe tener al menos 30 caracteres.", { tone: "error" });
+    if (trimmed.length < 30 && !pdfFile) {
+      toast.show("Debes ingresar al menos 30 caracteres de texto o adjuntar un archivo PDF.", {
+        tone: "error",
+      });
       return;
     }
     if (selectedTypes.length === 0) {
@@ -184,6 +251,7 @@ export function ThemePackModal({ open, onClose }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: trimmed,
+          pdfBase64: pdfFile?.base64,
           level: aiLevel,
           language: "español",
         }),
@@ -378,7 +446,11 @@ export function ThemePackModal({ open, onClose }: Props) {
           <div className="flex items-center justify-between w-full">
             <Button
               variant="ghost"
-              onClick={() => setCreatedPack(null)}
+              onClick={() => {
+                setCreatedPack(null);
+                setPdfFile(null);
+                if (pdfInputRef.current) pdfInputRef.current.value = "";
+              }}
               icon={<RotateCcw className="size-4" aria-hidden />}
             >
               Crear otro
@@ -406,7 +478,7 @@ export function ThemePackModal({ open, onClose }: Props) {
               <Button
                 variant="primary"
                 disabled={
-                  aiText.trim().length < 30 ||
+                  (aiText.trim().length < 30 && pdfFile === null) ||
                   selectedTypes.length === 0 ||
                   aiLoading ||
                   aiEnabled === false
@@ -415,7 +487,11 @@ export function ThemePackModal({ open, onClose }: Props) {
                 loading={aiLoading}
                 icon={<Sparkles className="size-4" aria-hidden />}
               >
-                {aiLoading ? "Generando actividades con Gemini..." : "Generar actividades con Gemini"}
+                {aiLoading
+                  ? pdfFile
+                    ? "Analizando PDF y generando actividades..."
+                    : "Analizando texto con Gemini..."
+                  : "Generar actividades con Gemini"}
               </Button>
             ) : (
               <Button
@@ -617,7 +693,7 @@ export function ThemePackModal({ open, onClose }: Props) {
                 <div className="min-w-0">
                   <p className="font-semibold text-ink">Generación con Inteligencia Artificial</p>
                   <p className="text-ink-3 text-xs mt-0.5 leading-relaxed">
-                    Pega un apunte, resumen o lección escolar. Gemini extraerá los conceptos clave y generará automáticamente un pack con 6 actividades imprimibles distintas en un solo paso.
+                    Pega un apunte, resumen o lección escolar, o adjunta un archivo PDF. Gemini analizará el contenido para extraer los conceptos clave y generará automáticamente un pack con 6 actividades imprimibles en un solo paso.
                   </p>
                 </div>
               </div>
@@ -645,31 +721,108 @@ export function ThemePackModal({ open, onClose }: Props) {
                 </div>
               )}
 
+              {/* Carga de archivo PDF */}
+              <div>
+                <input
+                  ref={pdfInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handlePdfFileInput}
+                  className="hidden"
+                />
+
+                {pdfFile ? (
+                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary-soft/20 p-3.5 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-on-primary shadow-xs">
+                        <FileText className="size-5" aria-hidden />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-ink truncate">{pdfFile.name}</p>
+                        <p className="text-xs text-ink-3 font-mono">{formatFileSize(pdfFile.size)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      type="button"
+                      onClick={handleClearPdf}
+                      icon={<X className="size-4" aria-hidden />}
+                      className="text-ink-3 hover:text-ink shrink-0"
+                      title="Quitar archivo PDF"
+                    >
+                      Quitar
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handlePdfDrop}
+                    onClick={() => pdfInputRef.current?.click()}
+                    className="group flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-line-strong bg-surface/50 p-3.5 text-left transition-colors hover:border-primary hover:bg-surface cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-ink group-hover:scale-105 transition-transform">
+                        <FileUp className="size-5" aria-hidden />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-ink truncate">
+                          Adjuntar apunte o diapositivas en PDF (máx. 4 MB)
+                        </p>
+                        <p className="text-xs text-ink-3 truncate">
+                          Arrastra o haz clic para subir diapositivas, fotocopias o apuntes escolares
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      type="button"
+                      className="shrink-0 pointer-events-none"
+                    >
+                      Examinar
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               {/* Textarea para el contenido */}
               <div>
                 <Field
-                  label="Texto, apunte o lección escolar"
+                  label={
+                    pdfFile
+                      ? "Instrucciones o notas adicionales (opcional)"
+                      : "Texto, apunte o lección escolar"
+                  }
                   hint={
-                    <span className="flex items-center justify-between w-full">
-                      <span>Pega aquí la lectura o apunte escolar.</span>
-                      <span
-                        className={cn(
-                          "font-mono text-xs",
-                          aiText.trim().length >= 30 ? "text-ok font-semibold" : "text-ink-3"
-                        )}
-                      >
-                        {aiText.trim().length} / 30 car. mín.
+                    pdfFile ? (
+                      <span>Opcional: agrega notas pedagógicas o aclaraciones para complementar el PDF adjunto.</span>
+                    ) : (
+                      <span className="flex items-center justify-between w-full">
+                        <span>Pega aquí la lectura o apunte escolar.</span>
+                        <span
+                          className={cn(
+                            "font-mono text-xs",
+                            aiText.trim().length >= 30 ? "text-ok font-semibold" : "text-ink-3"
+                          )}
+                        >
+                          {aiText.trim().length} / 30 car. mín.
+                        </span>
                       </span>
-                    </span>
+                    )
                   }
                 >
                   {(fieldProps) => (
                     <Textarea
                       {...fieldProps}
-                      rows={6}
+                      rows={pdfFile ? 3 : 6}
                       value={aiText}
                       onChange={(e) => setAiText(e.target.value)}
-                      placeholder="Ejemplo: El ciclo del agua describe la presencia y el movimiento del agua en la Tierra y sobre ella. La evaporación ocurre cuando el sol calienta el agua superficial, transformándola en vapor. Luego, la condensación forma nubes y la precipitación regresa el agua a la tierra en forma de lluvia o nieve..."
+                      placeholder={
+                        pdfFile
+                          ? "Opcional: Por ejemplo, 'Hacer foco en la fase luminosa' o 'Adecuar para alumnos de 5to grado'..."
+                          : "Ejemplo: El ciclo del agua describe la presencia y el movimiento del agua en la Tierra y sobre ella. La evaporación ocurre cuando el sol calienta el agua superficial, transformándola en vapor. Luego, la condensación forma nubes y la precipitación regresa el agua a la tierra en forma de lluvia o nieve..."
+                      }
                       className="text-xs leading-relaxed"
                     />
                   )}
