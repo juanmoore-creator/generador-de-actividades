@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/ai/generate-from-text/route";
 import * as geminiModule from "@/lib/ai/gemini";
-import { ApiError } from "@google/genai";
+import { GeminiApiError } from "@/lib/ai/gemini";
 
-vi.mock("@/lib/ai/gemini", () => ({
-  generateActivitiesFromText: vi.fn(),
-}));
+vi.mock("@/lib/ai/gemini", async (importOriginal) => {
+  const actual = await importOriginal<typeof geminiModule>();
+  return {
+    ...actual,
+    generateActivitiesFromText: vi.fn(),
+  };
+});
 
 describe("generate-from-text API route", () => {
   const originalEnv = process.env.GEMINI_API_KEY;
@@ -107,11 +111,8 @@ describe("generate-from-text API route", () => {
       expect(data).toEqual(mockResult);
     });
 
-    it("handles rate limit ApiError (429)", async () => {
-      const rateLimitError = new ApiError({
-        message: "RESOURCE_EXHAUSTED",
-        status: 429,
-      });
+    it("handles rate limit GeminiApiError (429)", async () => {
+      const rateLimitError = new GeminiApiError("RESOURCE_EXHAUSTED", 429);
 
       vi.mocked(geminiModule.generateActivitiesFromText).mockRejectedValue(rateLimitError);
 

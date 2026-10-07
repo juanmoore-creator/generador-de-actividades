@@ -1,10 +1,17 @@
-import { ApiError } from "@google/genai";
-import { generateActivitiesFromText } from "@/lib/ai/gemini";
+import { generateActivitiesFromText, GeminiApiError } from "@/lib/ai/gemini";
 
 export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 export function GET() {
-  return Response.json({ enabled: Boolean(process.env.GEMINI_API_KEY) });
+  return Response.json(
+    { enabled: Boolean(process.env.GEMINI_API_KEY) },
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    }
+  );
 }
 
 export async function POST(request: Request) {
@@ -49,23 +56,17 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error in generate-from-text route:", error);
 
-    if (error instanceof ApiError) {
+    if (error instanceof GeminiApiError) {
       if (error.status === 429) {
         return Response.json(
-          { error: "Límite de solicitudes alcanzado. Por favor, espera un minuto e intenta de nuevo." },
+          { error: "Límite de solicitudes alcanzado en Gemini. Espera un minuto e intenta de nuevo." },
           { status: 429 }
         );
       }
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 400 || error.status === 401 || error.status === 403) {
         return Response.json(
           { error: "La clave GEMINI_API_KEY no es válida o carece de permisos." },
           { status: 401 }
-        );
-      }
-      if (error.status === 400) {
-        return Response.json(
-          { error: "La solicitud a Gemini no fue válida. Por favor, revisa el contenido." },
-          { status: 400 }
         );
       }
       return Response.json(
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
       msg.toLowerCase().includes("resource_exhausted")
     ) {
       return Response.json(
-        { error: "Límite de solicitudes alcanzado. Por favor, espera un minuto e intenta de nuevo." },
+        { error: "Límite de solicitudes alcanzado en Gemini. Espera un minuto e intenta de nuevo." },
         { status: 429 }
       );
     }

@@ -1,4 +1,3 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { sanitizeSpanishWord } from "../generators/wordSearch";
 
 export interface GenerateActivitiesOptions {
@@ -25,30 +24,39 @@ export interface GeneratedActivitiesResult {
   cryptogram: GeneratedCryptogram;
 }
 
+export class GeminiApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "GeminiApiError";
+    this.status = status;
+  }
+}
+
 export const activitiesResponseSchema = {
-  type: Type.OBJECT,
+  type: "OBJECT",
   description: "Educational activity pack structure with vocabulary, cloze text, and cryptogram",
   properties: {
     themeTitle: {
-      type: Type.STRING,
+      type: "STRING",
       description: "Concise title for the educational topic (max 60 chars)",
     },
     summary: {
-      type: Type.STRING,
+      type: "STRING",
       description: "Short pedagogical overview of the topic (2-3 sentences)",
     },
     vocabulary: {
-      type: Type.ARRAY,
+      type: "ARRAY",
       description: "List of 12 to 20 key vocabulary words with pedagogical clues",
       items: {
-        type: Type.OBJECT,
+        type: "OBJECT",
         properties: {
           word: {
-            type: Type.STRING,
+            type: "STRING",
             description: "Single uppercase word without accents, 3-15 letters (e.g. FOTOSINTESIS, CELULA)",
           },
           clue: {
-            type: Type.STRING,
+            type: "STRING",
             description: "Concise pedagogical definition or clue, max 120 chars, not containing the word itself",
           },
         },
@@ -56,19 +64,19 @@ export const activitiesResponseSchema = {
       },
     },
     clozeParagraph: {
-      type: Type.STRING,
+      type: "STRING",
       description: "Pedagogical paragraph of 50-100 words with 4-8 key words inside brackets like [palabra]",
     },
     cryptogram: {
-      type: Type.OBJECT,
+      type: "OBJECT",
       description: "A memorable key takeaway sentence in uppercase with a clue",
       properties: {
         phrase: {
-          type: Type.STRING,
+          type: "STRING",
           description: "Memorable takeaway phrase or sentence, 20-80 characters, uppercase",
         },
         hint: {
-          type: Type.STRING,
+          type: "STRING",
           description: "Helpful pedagogical hint guiding the student",
         },
       },
@@ -99,71 +107,94 @@ export function sanitizeGeneratedActivities(raw: unknown): GeneratedActivitiesRe
       ? data.themeTitle.trim().slice(0, 100)
       : "Actividades Temáticas";
 
-  const summary = typeof data.summary === "string" ? data.summary.trim() : "";
+  const summary =
+    typeof data.summary === "string" && data.summary.trim()
+      ? data.summary.trim()
+      : `Actividades sobre ${themeTitle}`;
 
-  // Sanitize vocabulary: clean Spanish uppercase words, deduplicate
+  // Process and sanitize vocabulary items
   const rawVocab = Array.isArray(data.vocabulary) ? data.vocabulary : [];
-  const seen = new Set<string>();
+  const seenWords = new Set<string>();
   const vocabulary: GeneratedVocabularyItem[] = [];
 
   for (const item of rawVocab) {
     if (!item || typeof item !== "object") continue;
-    const entry = item as Record<string, unknown>;
-    const rawWord = typeof entry.word === "string" ? entry.word : "";
-    const cleanWord = sanitizeSpanishWord(rawWord);
-    const clue = typeof entry.clue === "string" ? entry.clue.trim().slice(0, 150) : "";
+    const rawWord = (item as Record<string, unknown>).word;
+    const rawClue = (item as Record<string, unknown>).clue;
 
-    if (cleanWord.length >= 3 && cleanWord.length <= 15 && !seen.has(cleanWord)) {
-      seen.add(cleanWord);
-      vocabulary.push({
-        word: cleanWord,
-        clue,
-      });
+    if (typeof rawWord !== "string") continue;
+    const cleanWord = sanitizeSpanishWord(rawWord);
+
+    // Enforce reasonable length and uniqueness (3 to 18 chars)
+    if (cleanWord.length < 3 || cleanWord.length > 18 || seenWords.has(cleanWord)) {
+      continue;
     }
+
+    seenWords.add(cleanWord);
+    const cleanClue =
+      typeof rawClue === "string" && rawClue.trim()
+        ? rawClue.trim().slice(0, 180)
+        : `Concepto relacionado con ${themeTitle}`;
+
+    vocabulary.push({
+      word: cleanWord,
+      clue: cleanClue,
+    });
   }
 
   if (vocabulary.length < 3) {
     throw new Error("Gemini no generó suficiente vocabulario válido (mínimo 3 palabras).");
   }
 
-  // Sanitize cloze paragraph
-  let clozeParagraph = typeof data.clozeParagraph === "string" ? data.clozeParagraph.trim() : "";
+  // Ensure cloze paragraph is usable
+  let clozeParagraph =
+    typeof data.clozeParagraph === "string" && data.clozeParagraph.trim()
+      ? data.clozeParagraph.trim()
+      : "";
+
   if (!clozeParagraph) {
-    const sampleWords = vocabulary.slice(0, 4).map((v) => `[${v.word}]`).join(", ");
-    clozeParagraph = `En esta lección sobre ${themeTitle}, estudiamos conceptos fundamentales como ${sampleWords}.`;
+    const sampleWords = vocabulary.slice(0, 4).map((v) => `[${v.word}]`);
+    clozeParagraph = `En esta lección sobre ${themeTitle}, estudiamos conceptos como ${sampleWords.join(", ")}.`;
   }
 
-  // Sanitize cryptogram
+  // Process cryptogram
   const rawCrypto =
-    typeof data.cryptogram === "object" && data.cryptogram !== null
+    data.cryptogram && typeof data.cryptogram === "object"
       ? (data.cryptogram as Record<string, unknown>)
       : {};
 
-  let phrase = typeof rawCrypto.phrase === "string" ? rawCrypto.phrase.trim().toUpperCase() : "";
-  let hint = typeof rawCrypto.hint === "string" ? rawCrypto.hint.trim().slice(0, 150) : "";
+  let cryptoPhrase =
+    typeof rawCrypto.phrase === "string" && rawCrypto.phrase.trim()
+      ? rawCrypto.phrase.trim().toUpperCase()
+      : "";
 
-  if (phrase.length < 10) {
-    const keyWords = vocabulary.slice(0, 3).map((v) => v.word).join(" ");
-    phrase = `${themeTitle.toUpperCase()}: ${keyWords}`;
-    hint = hint || `Concepto clave sobre ${themeTitle}`;
+  if (!cryptoPhrase || cryptoPhrase.length < 8) {
+    cryptoPhrase =
+      vocabulary.length > 0
+        ? `EL ESTUDIO DE ${themeTitle.toUpperCase()} ES FUNDAMENTAL`
+        : "APRENDER CADA DIA ES UN GRAN LOGRO";
   }
 
-  phrase = phrase.slice(0, 80);
+  const cryptoHint =
+    typeof rawCrypto.hint === "string" && rawCrypto.hint.trim()
+      ? rawCrypto.hint.trim()
+      : `Pista sobre ${themeTitle}`;
 
   return {
     themeTitle,
     summary,
-    vocabulary: vocabulary.slice(0, 20),
+    vocabulary,
     clozeParagraph,
     cryptogram: {
-      phrase,
-      hint: hint || `Pista: ${themeTitle}`,
+      phrase: cryptoPhrase,
+      hint: cryptoHint,
     },
   };
 }
 
 /**
- * Generates an activity pack from input text using Google Gemini (gemini-2.5-flash).
+ * Calls Google Gemini REST API directly using native fetch.
+ * Generates vocabulary, cloze text, and cryptogram from text in a single roundtrip.
  */
 export async function generateActivitiesFromText({
   text,
@@ -182,8 +213,6 @@ export async function generateActivitiesFromText({
   if (trimmedText.length > 30000) {
     throw new Error("El texto no puede superar los 30.000 caracteres.");
   }
-
-  const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = `Eres un docente experto y pedagogo de habla hispana especializado en diseño de material didáctico imprimible.
 Analiza el texto pedagógico, resumen o apunte escolar provisto por el usuario y genera una estructura didáctica completa y coherente en formato JSON.
@@ -214,17 +243,38 @@ ${trimmedText}
 
 Genera el JSON estructurado respetando estrictamente el esquema indicado.`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: userPrompt,
-    config: {
-      systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: activitiesResponseSchema,
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      system_instruction: {
+        parts: [{ text: systemInstruction }],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: userPrompt }],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: activitiesResponseSchema,
+      },
+    }),
   });
 
-  const rawJson = response.text;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const message = errorData?.error?.message || `Error en la API de Gemini (${response.status})`;
+    throw new GeminiApiError(message, response.status);
+  }
+
+  const data = await response.json();
+  const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!rawJson) {
     throw new Error("Gemini no devolvió ninguna respuesta de texto.");
   }

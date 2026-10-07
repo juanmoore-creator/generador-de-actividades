@@ -3,36 +3,8 @@ import {
   generateActivitiesFromText,
   sanitizeGeneratedActivities,
   activitiesResponseSchema,
+  GeminiApiError,
 } from "../ai/gemini";
-import { GoogleGenAI } from "@google/genai";
-
-vi.mock("@google/genai", () => {
-  const generateContentMock = vi.fn();
-  const GoogleGenAIMock = vi.fn().mockImplementation(() => ({
-    models: {
-      generateContent: generateContentMock,
-    },
-  }));
-
-  return {
-    GoogleGenAI: GoogleGenAIMock,
-    Type: {
-      STRING: "STRING",
-      NUMBER: "NUMBER",
-      INTEGER: "INTEGER",
-      BOOLEAN: "BOOLEAN",
-      ARRAY: "ARRAY",
-      OBJECT: "OBJECT",
-    },
-    ApiError: class ApiError extends Error {
-      status: number;
-      constructor(options: { message: string; status: number }) {
-        super(options.message);
-        this.status = options.status;
-      }
-    },
-  };
-});
 
 describe("gemini AI generator", () => {
   const originalEnv = process.env.GEMINI_API_KEY;
@@ -44,6 +16,7 @@ describe("gemini AI generator", () => {
 
   afterEach(() => {
     process.env.GEMINI_API_KEY = originalEnv;
+    vi.restoreAllMocks();
   });
 
   describe("activitiesResponseSchema", () => {
@@ -169,15 +142,21 @@ describe("gemini AI generator", () => {
         },
       };
 
-      const mockGenerateContent = vi.fn().mockResolvedValue({
-        text: JSON.stringify(mockResultData),
-      });
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify(mockResultData) }],
+              },
+            },
+          ],
+        }),
+      };
 
-      (GoogleGenAI as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        models: {
-          generateContent: mockGenerateContent,
-        },
-      }));
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse as unknown as Response);
 
       const result = await generateActivitiesFromText({
         text: "La célula es la unidad morfológica y funcional de todo ser vivo. De hecho, la célula es el elemento de menor tamaño que puede considerarse vivo.",
@@ -187,14 +166,31 @@ describe("gemini AI generator", () => {
 
       expect(result.themeTitle).toBe("La Célula");
       expect(result.vocabulary).toHaveLength(3);
-      expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining("gemini-2.5-flash:generateContent"),
         expect.objectContaining({
-          model: "gemini-2.5-flash",
-          config: expect.objectContaining({
-            responseMimeType: "application/json",
-          }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
         })
       );
+    });
+
+    it("throws GeminiApiError when API response is not ok", async () => {
+      const errorResponse = {
+        ok: false,
+        status: 400,
+        json: async () => ({
+          error: { message: "API key not valid." },
+        }),
+      };
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(errorResponse as unknown as Response);
+
+      await expect(
+        generateActivitiesFromText({
+          text: "Texto lo suficientemente largo para hacer la prueba de fallo de la API.",
+        })
+      ).rejects.toThrow(GeminiApiError);
     });
   });
 });
