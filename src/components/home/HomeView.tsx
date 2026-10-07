@@ -94,69 +94,44 @@ export function HomeView({ onCreate, onContinue, onOpenSaved }: Props) {
         </p>
       </section>
 
-      {/* Banner destacado: Crear Pack Temático con IA (CSV) */}
-      <section aria-label="Pack con IA">
-        <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-r from-accent-soft/80 via-surface to-surface p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3.5">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-on-primary">
-                <Sparkles className="size-6 text-accent-ink" aria-hidden />
-              </span>
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-accent-ink">
-                  Nuevo · IA + CSV
-                </div>
-                <h2 className="text-lg font-bold text-ink sm:text-xl">
-                  Crea un Pack Temático de Actividades
-                </h2>
-                <p className="max-w-xl text-sm text-ink-3">
-                  Copia nuestro prompt para ChatGPT, Claude o Gemini con tus apuntes y pega aquí el CSV para armar Sopa de letras, Crucigrama, Anagramas y Relacionar columnas al instante.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 sm:self-center">
-              <a
-                href="/instrucciones-ia"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink cursor-pointer"
-              >
-                <span>Ver prompt e instrucciones ↗</span>
-              </a>
-              <Button variant="primary" onClick={openThemePack} icon={<Sparkles className="size-4" aria-hidden />}>
-                Crear Pack Temático
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Atajos: continuar borrador y fichas guardadas */}
-      <section className="grid gap-3 sm:grid-cols-2" aria-label="Continuar">
-        <Card className="flex items-center gap-4 p-4">
-          <ActivityIcon type={snapshot.type} size="lg" />
+      {/* Atajos principales */}
+      <section className="grid gap-3 sm:grid-cols-3" aria-label="Acciones rápidas">
+        <Card className="flex items-center gap-3.5 p-4">
+          <ActivityIcon type={snapshot.type} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-ink-3">{state.dirty || state.savedId ? "Sigue donde lo dejaste" : "Tu borrador"}</p>
-            <p className="truncate font-semibold text-ink">{snapshot.title || draftMeta.defaultTitle}</p>
-            <p className="text-sm text-ink-3">{draftMeta.title}</p>
+            <p className="text-xs text-ink-3">{state.dirty || state.savedId ? "Sigue donde lo dejaste" : "Tu borrador"}</p>
+            <p className="truncate font-semibold text-ink text-sm sm:text-base">{snapshot.title || draftMeta.defaultTitle}</p>
           </div>
-          <Button variant="primary" onClick={onContinue} icon={<PenLine className="size-4" aria-hidden />}>
+          <Button size="sm" variant="primary" onClick={onContinue} icon={<PenLine className="size-4" aria-hidden />}>
             Continuar
           </Button>
         </Card>
-        <Card className="flex items-center gap-4 p-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
-            <FolderOpen className="size-6" aria-hidden />
+
+        <Card className="flex items-center gap-3.5 p-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <FolderOpen className="size-5" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-ink-3">Mis fichas</p>
-            <p className="font-semibold text-ink">
-              {saved.length === 0 ? "Todavía no guardaste fichas" : `${saved.length} ${saved.length === 1 ? "ficha guardada" : "fichas guardadas"}`}
+            <p className="text-xs text-ink-3">Mis fichas</p>
+            <p className="font-semibold text-ink text-sm sm:text-base">
+              {saved.length === 0 ? "Sin fichas aún" : `${saved.length} ${saved.length === 1 ? "guardada" : "guardadas"}`}
             </p>
           </div>
-          <Button variant="secondary" onClick={onOpenSaved} icon={<ArrowRight className="size-4" aria-hidden />}>
+          <Button size="sm" variant="secondary" onClick={onOpenSaved} icon={<ArrowRight className="size-4" aria-hidden />}>
             Ver
+          </Button>
+        </Card>
+
+        <Card className="flex items-center gap-3.5 p-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-ink">
+            <Sparkles className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-ink-3">Cuadernillo</p>
+            <p className="font-semibold text-ink text-sm sm:text-base">Pack con IA</p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={openThemePack} icon={<Sparkles className="size-4" aria-hidden />}>
+            Crear
           </Button>
         </Card>
       </section>

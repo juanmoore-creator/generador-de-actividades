@@ -432,18 +432,27 @@ export function SheetStep() {
         ]}
       />
 
-      <div>
-        <Segmented
-          label={s.type === "bingo" ? "Cartones distintos" : "Versiones distintas"}
-          value={s.sheet.copies}
-          onChange={(copies) => dispatch({ type: "patchSheet", patch: { copies } })}
-          options={Array.from({ length: MAX_COPIES }, (_, i) => ({ value: i + 1, label: String(i + 1) }))}
+      <div className="space-y-3">
+        <Switch
+          label={s.type === "bingo" ? "Varios cartones distintos" : "Versiones distintas (anti-copia)"}
+          description={
+            s.type === "bingo"
+              ? "Imprime cartones con palabras en diferente orden para cada alumno."
+              : "Crea versiones (A, B, C…) con distinta distribución para que no se copien."
+          }
+          checked={s.sheet.copies > 1}
+          onChange={(multi) => dispatch({ type: "patchSheet", patch: { copies: multi ? 2 : 1 } })}
         />
-        <p className="mt-2 text-sm text-ink-3">
-          {s.type === "bingo"
-            ? "Cada cartón tiene las palabras en otro orden. Se imprime uno por página."
-            : "Cada versión (A, B, C…) tiene otra distribución para evitar que se copien. Las respuestas incluyen todas las versiones."}
-        </p>
+        {s.sheet.copies > 1 && (
+          <div className="rounded-xl border border-line bg-surface-2/60 p-3">
+            <Segmented
+              label={s.type === "bingo" ? "Cantidad de cartones" : "Cantidad de versiones"}
+              value={s.sheet.copies}
+              onChange={(copies) => dispatch({ type: "patchSheet", patch: { copies } })}
+              options={Array.from({ length: MAX_COPIES - 1 }, (_, i) => ({ value: i + 2, label: `${i + 2}` }))}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

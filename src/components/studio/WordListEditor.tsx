@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ClipboardPaste, Plus, Sparkles, Trash2, Eraser, BookOpen } from "lucide-react";
+import { ClipboardPaste, Plus, Sparkles, Trash2, Eraser } from "lucide-react";
 import type { WordItem } from "@/lib/types/activities";
-import { THEME_PRESETS } from "@/lib/activities/presets";
 import { parseBulkText } from "@/lib/activities/bulk";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -35,7 +34,6 @@ export function WordListEditor({ items, onChange, clues, minItems = 0, onTitleSu
   const wordRefs = useRef<(HTMLInputElement | null)[]>([]);
   const pendingFocus = useRef<number | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
-  const [themesOpen, setThemesOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
 
@@ -115,9 +113,6 @@ export function WordListEditor({ items, onChange, clues, minItems = 0, onTitleSu
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="secondary" onClick={() => setThemesOpen(true)} icon={<BookOpen className="size-4" aria-hidden />}>
-          Temas listos
-        </Button>
         <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)} icon={<ClipboardPaste className="size-4" aria-hidden />}>
           Pegar lista
         </Button>
@@ -206,15 +201,6 @@ export function WordListEditor({ items, onChange, clues, minItems = 0, onTitleSu
         Consejo: con <kbd className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs">Enter</kbd> pasas a la siguiente fila.
       </p>
 
-      <ThemesDialog
-        open={themesOpen}
-        onClose={() => setThemesOpen(false)}
-        onPick={(preset) => {
-          replaceAll(preset.items.map((i) => ({ ...i })), `Tema "${preset.title}" cargado`);
-          onTitleSuggestion?.(preset.title);
-          setThemesOpen(false);
-        }}
-      />
       <PasteDialog
         open={pasteOpen}
         onClose={() => setPasteOpen(false)}
@@ -241,40 +227,6 @@ export function WordListEditor({ items, onChange, clues, minItems = 0, onTitleSu
         />
       )}
     </div>
-  );
-}
-
-function ThemesDialog({
-  open,
-  onClose,
-  onPick,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onPick: (preset: (typeof THEME_PRESETS)[number]) => void;
-}) {
-  return (
-    <Modal open={open} onClose={onClose} title="Temas listos" description="Reemplaza la lista actual por palabras de ejemplo (puedes deshacerlo).">
-      <ul className="grid gap-2 sm:grid-cols-2">
-        {THEME_PRESETS.map((p) => (
-          <li key={p.id}>
-            <button
-              type="button"
-              onClick={() => onPick(p)}
-              className="flex w-full items-center gap-3 rounded-xl border border-line p-3 text-left hover:bg-surface-2 cursor-pointer"
-            >
-              <span className="text-2xl" aria-hidden>
-                {p.emoji}
-              </span>
-              <span>
-                <span className="block font-semibold text-ink">{p.title}</span>
-                <span className="block text-sm text-ink-3">{p.items.length} palabras</span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Modal>
   );
 }
 

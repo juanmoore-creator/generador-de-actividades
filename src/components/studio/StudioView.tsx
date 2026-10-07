@@ -11,17 +11,13 @@ import {
   Eye,
   FileCheck2,
   Files,
-  Maximize2,
   Printer,
   Repeat,
   Share2,
   SlidersHorizontal,
   Undo2,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 import { ACTIVITIES, CATEGORIES } from "@/lib/activities/catalog";
-import { generateActivity } from "@/lib/activities/engine";
 import type { ActivityType } from "@/lib/types/activities";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -163,7 +159,6 @@ function PreviewPane() {
   const { snapshot, generated, state, dispatch, regenerate, canExport } = useStudio();
   const [showSolution, setShowSolution] = useState(false);
   const [version, setVersion] = useState(0);
-  const [zoom, setZoom] = useState(1);
   const copies = snapshot.sheet.copies;
   const current = Math.min(version, copies - 1);
   const gen = generated(current);
@@ -172,7 +167,7 @@ function PreviewPane() {
     <div className="space-y-3">
       <DesktopActionBar />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Segmented
           label="Mostrar"
           hideLabel
@@ -201,19 +196,11 @@ function PreviewPane() {
             </select>
           </label>
         )}
-        <div className="ml-auto flex items-center gap-1">
-          <IconButton size="sm" variant="ghost" label="Alejar" icon={<ZoomOut className="size-4" aria-hidden />} disabled={zoom <= 0.6} onClick={() => setZoom((z) => Math.max(0.6, +(z - 0.2).toFixed(1)))} />
-          <span className="w-12 text-center font-mono text-sm text-ink-2" aria-live="polite">
-            {Math.round(zoom * 100)}%
-          </span>
-          <IconButton size="sm" variant="ghost" label="Acercar" icon={<ZoomIn className="size-4" aria-hidden />} disabled={zoom >= 2} onClick={() => setZoom((z) => Math.min(2, +(z + 0.2).toFixed(1)))} />
-          <IconButton size="sm" variant="ghost" label="Ajustar al ancho" icon={<Maximize2 className="size-4" aria-hidden />} onClick={() => setZoom(1)} />
-        </div>
       </div>
 
       <div className="canvas-grid rounded-2xl border border-line bg-surface-2 p-3 sm:p-5">
         {canExport ? (
-          <ScaledSheet pageSize={snapshot.sheet.pageSize} zoom={zoom} className="lg:max-h-[calc(100dvh-16rem)] lg:overflow-y-auto">
+          <ScaledSheet pageSize={snapshot.sheet.pageSize} className="lg:max-h-[calc(100dvh-16rem)] lg:overflow-y-auto">
             <Sheet snap={snapshot} gen={gen} showSolution={showSolution} versionLabel={versionLabel(snapshot, current)} />
           </ScaledSheet>
         ) : (
@@ -223,53 +210,23 @@ function PreviewPane() {
         )}
       </div>
 
-      {/* Variantes: regenerar, deshacer y volver a una anterior */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Variantes: regenerar y deshacer */}
+      <div className="flex items-center gap-2">
         <Button size="sm" variant="secondary" onClick={regenerate} icon={<Dices className="size-4" aria-hidden />}>
           Otra variante
         </Button>
         {state.previousSeeds.length > 0 && (
-          <>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => dispatch({ type: "restoreSeed", seed: state.previousSeeds[0] })}
-              icon={<Undo2 className="size-4" aria-hidden />}
-            >
-              Deshacer
-            </Button>
-            <span className="ml-auto text-sm text-ink-3">Anteriores:</span>
-            <ul className="flex gap-2" aria-label="Variantes anteriores">
-              {state.previousSeeds.slice(0, 3).map((seed, i) => (
-                <li key={seed}>
-                  <VariantThumb seed={seed} index={i} />
-                </li>
-              ))}
-            </ul>
-          </>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => dispatch({ type: "restoreSeed", seed: state.previousSeeds[0] })}
+            icon={<Undo2 className="size-4" aria-hidden />}
+          >
+            Deshacer
+          </Button>
         )}
       </div>
     </div>
-  );
-}
-
-function VariantThumb({ seed, index }: { seed: number; index: number }) {
-  const { snapshot, dispatch } = useStudio();
-  const snap = useMemo(() => ({ ...snapshot, seed }), [snapshot, seed]);
-  const gen = useMemo(() => generateActivity(snap), [snap]);
-  return (
-    <button
-      type="button"
-      onClick={() => dispatch({ type: "restoreSeed", seed })}
-      aria-label={`Volver a la variante anterior ${index + 1}`}
-      className="block h-16 w-12 overflow-hidden rounded-md border border-line-strong bg-white hover:ring-2 hover:ring-accent cursor-pointer"
-    >
-      <span className="pointer-events-none block" aria-hidden>
-        <ScaledSheet pageSize={snap.sheet.pageSize}>
-          <Sheet snap={snap} gen={gen} showSolution={false} />
-        </ScaledSheet>
-      </span>
-    </button>
   );
 }
 
@@ -278,9 +235,9 @@ function VariantThumb({ seed, index }: { seed: number; index: number }) {
 // ---------------------------------------------------------------------------
 
 function useExportMenuItems() {
-  const { exportPdf, snapshot } = useStudio();
+  const { exportPdf, snapshot, canShare } = useStudio();
   const multi = snapshot.sheet.copies > 1;
-  return [
+  const items = [
     {
       label: "Ficha del alumno",
       description: multi ? `${snapshot.sheet.copies} versiones` : "Lista para imprimir",
@@ -300,10 +257,21 @@ function useExportMenuItems() {
       onSelect: () => exportPdf("both", "download"),
     },
   ];
+
+  if (canShare) {
+    items.push({
+      label: "Compartir",
+      description: "WhatsApp, correo, Drive…",
+      icon: <Share2 className="size-4" aria-hidden />,
+      onSelect: () => exportPdf("student", "share"),
+    });
+  }
+
+  return items;
 }
 
 function DesktopActionBar() {
-  const { exportPdf, exporting, canExport, canShare } = useStudio();
+  const { exportPdf, exporting, canExport } = useStudio();
   const app = useApp();
   const items = useExportMenuItems();
   return (
@@ -315,18 +283,13 @@ function DesktopActionBar() {
         align="start"
         items={items}
         trigger={(p) => (
-          <Button {...p} variant="secondary" loading={exporting === "download"} disabled={!canExport || exporting !== null} icon={<Download className="size-4" aria-hidden />}>
+          <Button {...p} variant="secondary" loading={exporting === "download" || exporting === "share"} disabled={!canExport || exporting !== null} icon={<Download className="size-4" aria-hidden />}>
             Descargar PDF
             <ChevronDown className="size-4" aria-hidden />
           </Button>
         )}
       />
-      {canShare && (
-        <Button variant="secondary" loading={exporting === "share"} disabled={!canExport || exporting !== null} onClick={() => exportPdf("student", "share")} icon={<Share2 className="size-4" aria-hidden />}>
-          Compartir
-        </Button>
-      )}
-      <Button variant="accent" className="ml-auto" onClick={app.openSave} icon={<BookmarkPlus className="size-4" aria-hidden />}>
+      <Button variant="secondary" className="ml-auto" onClick={app.openSave} icon={<BookmarkPlus className="size-4" aria-hidden />}>
         Guardar
       </Button>
     </div>
